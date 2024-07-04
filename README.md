@@ -1,2 +1,2 @@
 # patience
-Patience game the way mom plays it.
+The card game of Patience the way mom plays it.
