@@ -26,7 +26,6 @@ class PatienceGame:
         self.create_menu()
         self.create_game_area()
         self.create_status_bar()
-        self.create_deal_button()
 
         self.card_images = self.load_card_images()
         self.houses = [[] for _ in range(10)]
@@ -36,13 +35,26 @@ class PatienceGame:
 
         self.status_var.set("Welcome to Patience! Click 'Deal Cards' to begin.")
 
-        self.create_deal_button()
-        self.create_hint_button()
-
         self.highlight_rectangles = []
 
         self.zoom_factor = 1.0
-        self.create_zoom_buttons()
+        self.create_control_buttons()
+
+    def create_clear_button(self):
+        self.clear_button = ttk.Button(
+            self.master, text="Clear Board", command=self.clear_board
+        )
+        self.clear_button.pack(side=tk.BOTTOM, pady=5)
+
+    def clear_board(self):
+        self.houses = [[] for _ in range(10)]
+        self.end_houses = [[] for _ in range(4)]
+        self.card_items.clear()
+        self.game_canvas.delete("card")
+        self.status_var.set("Board cleared. Click 'Deal Cards' to start a new game.")
+        self.deal_button.config(state=tk.NORMAL)
+        self.hint_button.config(state=tk.DISABLED)
+        self.clear_highlights()
 
     def create_zoom_buttons(self):
         zoom_frame = ttk.Frame(self.master)
@@ -127,14 +139,40 @@ class PatienceGame:
         status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
     def new_game(self):
-        self.houses = [[] for _ in range(10)]
-        self.end_houses = [[] for _ in range(4)]
-        self.card_items.clear()
-        self.game_canvas.delete("card")
+        self.clear_board()
         self.status_var.set("New game started. Click 'Deal Cards' to begin.")
-        self.deal_button.config(state=tk.NORMAL)
-        self.clear_highlights()
-        self.hint_button.config(state=tk.DISABLED)
+
+    def create_control_buttons(self):
+        control_frame = ttk.Frame(self.master)
+        control_frame.pack(side=tk.BOTTOM, pady=10)
+
+        self.deal_button = ttk.Button(
+            control_frame, text="Deal Cards", command=self.animated_deal
+        )
+        self.deal_button.pack(side=tk.LEFT, padx=5)
+
+        self.hint_button = ttk.Button(
+            control_frame, text="Hint", command=self.show_hint
+        )
+        self.hint_button.pack(side=tk.LEFT, padx=5)
+
+        self.clear_button = ttk.Button(
+            control_frame, text="Clear Board", command=self.clear_board
+        )
+        self.clear_button.pack(side=tk.LEFT, padx=5)
+
+        zoom_frame = ttk.Frame(control_frame)
+        zoom_frame.pack(side=tk.LEFT, padx=5)
+
+        self.zoom_in_button = ttk.Button(
+            zoom_frame, text="Zoom In", command=self.zoom_in
+        )
+        self.zoom_in_button.pack(side=tk.LEFT, padx=2)
+
+        self.zoom_out_button = ttk.Button(
+            zoom_frame, text="Zoom Out", command=self.zoom_out
+        )
+        self.zoom_out_button.pack(side=tk.LEFT, padx=2)
 
     def restart_game(self):
         self.new_game()
@@ -225,7 +263,10 @@ class PatienceGame:
         self.card_items.clear()
 
         x_spacing = self.card_width + 20
-        y_spacing = int(30 * self.zoom_factor)
+        y_spacing = int(30 * self.zoom_factor)  # Adjust this value to increase spacing
+        stack_spacing = int(
+            25 * self.zoom_factor
+        )  # New variable for spacing between stacked cards
 
         for house_idx, house in enumerate(self.houses):
             x = 60 + house_idx * x_spacing
@@ -241,13 +282,10 @@ class PatienceGame:
                 )
                 self.game_canvas.tag_bind(item, "<B1-Motion>", self.on_card_motion)
 
-                # Only the top card of each pile should be fully visible
-                if card_idx < len(house) - 1:
-                    y += 15  # Smaller vertical spacing for stacked cards
-                else:
-                    y += y_spacing  # Larger spacing for the top card
+                # Increase the spacing between stacked cards
+                y += stack_spacing
 
-        # Display cards in end houses
+        # Display cards in end houses (if implemented)
         for house_idx, house in enumerate(self.end_houses):
             x = 300 + house_idx * x_spacing
             y = 600
