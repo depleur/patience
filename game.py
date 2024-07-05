@@ -36,6 +36,9 @@ class PatienceGame:
 
         self.status_var.set("Welcome to Patience! Click 'Deal Cards' to begin.")
 
+        self.create_deal_button()
+        self.create_hint_button()
+
     def center_window(self, width, height):
         screen_width = self.master.winfo_screenwidth()
         screen_height = self.master.winfo_screenheight()
@@ -76,18 +79,6 @@ class PatienceGame:
                 width=2,
             )
 
-        for i in range(4):
-            x = 300 + i * (self.card_width + 20)
-            y = 600
-            self.game_canvas.create_rectangle(
-                x,
-                y,
-                x + self.card_width,
-                y + self.card_height,
-                outline="#FFD700",
-                width=2,
-            )
-
     def create_status_bar(self):
         self.status_var = tk.StringVar()
         self.status_var.set("Welcome to Patience!")
@@ -103,10 +94,13 @@ class PatienceGame:
         self.game_canvas.delete("card")
         self.status_var.set("New game started. Click 'Deal Cards' to begin.")
         self.deal_button.config(state=tk.NORMAL)
+        self.clear_highlights()
+        self.hint_button.config(state=tk.DISABLED)
 
     def restart_game(self):
         self.new_game()
         self.status_var.set("Game restarted. Click 'Deal Cards' to begin.")
+        self.hint_button.config(state=tk.DISABLED)
 
     def load_card_images(self):
         suits = ["hearts", "diamonds", "clubs", "spades"]
@@ -151,17 +145,17 @@ class PatienceGame:
 
         house_card_counts = [8, 8, 8, 7, 6, 5, 4, 3, 2, 1]
 
-        # Deal cards from right to left for the first iteration
-        for i in range(9, -1, -1):
-            for _ in range(house_card_counts[9 - i]):
+        # Deal cards from left to right for the first iteration
+        for i in range(10):
+            for _ in range(house_card_counts[i]):
                 self.houses[i].append(self.deck.pop())
                 self.display_cards()
                 self.master.update()
                 time.sleep(0.1)
 
-        # Deal remaining cards from left to right
+        # Deal remaining cards, alternating direction
         current_house = 0
-        left_to_right = True
+        left_to_right = False  # Start right to left for the second round
         while self.deck:
             if len(self.houses[current_house]) < 8:
                 self.houses[current_house].append(self.deck.pop())
@@ -182,6 +176,10 @@ class PatienceGame:
         self.deal_button.config(
             state=tk.DISABLED
         )  # Keep the button disabled after dealing
+
+        self.status_var.set("Cards dealt. Good luck!")
+        self.deal_button.config(state=tk.DISABLED)
+        self.hint_button.config(state=tk.NORMAL)
 
     def display_cards(self):
         self.game_canvas.delete("card")
@@ -258,6 +256,12 @@ class PatienceGame:
         else:
             # If the move is invalid, return the cards to their original position
             self.display_cards()
+        if self.check_win():
+            self.status_var.set("Congratulations! You've won the game!")
+            self.deal_button.config(state=tk.NORMAL)
+        elif self.is_game_over():
+            self.status_var.set("Game over. No more moves possible. Try again!")
+            self.deal_button.config(state=tk.NORMAL)
 
     def on_card_release(self, event):
         if self.drag_data["item"]:
@@ -350,6 +354,73 @@ class PatienceGame:
             if c == card:
                 return item
         return None
+
+    def is_game_over(self):
+        # Check if any moves are possible
+        for i, source_house in enumerate(self.houses):
+            if not source_house:
+                continue
+            for j, target_house in enumerate(self.houses):
+                if i != j and self.is_valid_move(source_house[-1], target_house):
+                    return False
+        # Check if any cards can be moved to end houses
+        for house in self.houses:
+            if house and self.can_move_to_end_house(house[-1]):
+                return False
+        return True
+
+    def can_move_to_end_house(self, card):
+        for end_house in self.end_houses:
+            if not end_house and card.rank == 1:  # Ace can be moved to empty end house
+                return True
+            if (
+                end_house
+                and card.suit == end_house[-1].suit
+                and card.rank == end_house[-1].rank + 1
+            ):
+                return True
+        return False
+
+    def create_hint_button(self):
+        self.hint_button = tk.Button(self.master, text="Hint", command=self.show_hint)
+        self.hint_button.pack(side=tk.BOTTOM, pady=10)
+
+    def show_hint(self):
+        self.clear_highlights()
+        hint_found = False
+
+        # Check for moves between houses
+        for i, source_house in enumerate(self.houses):
+            if not source_house:
+                continue
+            for j, target_house in enumerate(self.houses):
+                if i != j and self.is_valid_move(source_house[-1], target_house):
+                    self.highlight_card(source_house[-1])
+                    hint_found = True
+                    break
+            if hint_found:
+                break
+
+        # Check for moves to end houses
+        if not hint_found:
+            for house in self.houses:
+                if house and self.can_move_to_end_house(house[-1]):
+                    self.highlight_card(house[-1])
+                    hint_found = True
+                    break
+
+        if not hint_found:
+            self.status_var.set(
+                "No hints available. Try moving cards to reveal new options."
+            )
+
+    def highlight_card(self, card):
+        item = self.get_card_item(card)
+        self.game_canvas.itemconfig(item, outline="yellow", width=3)
+
+    def clear_highlights(self):
+        for item in self.card_items:
+            self.game_canvas.itemconfig(item, outline="", width=1)
 
 
 if __name__ == "__main__":
