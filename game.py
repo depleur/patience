@@ -183,25 +183,6 @@ class PatienceGame:
             state=tk.DISABLED
         )  # Keep the button disabled after dealing
 
-    # def setup_game(self):
-    #     self.houses = [[] for _ in range(10)]
-    #     self.end_houses = [[] for _ in range(4)]
-    #     self.deck = self.create_deck()
-    #     self.status_var.set("Welcome to Patience! Click 'Deal Cards' to begin.")
-
-    #     house_card_counts = [8, 8, 8, 7, 6, 5, 4, 3, 2, 1]
-
-    #     # Deal cards from right to left for the first iteration
-    #     for i in range(9, -1, -1):
-    #         self.houses[i] = [self.deck.pop() for _ in range(house_card_counts[9 - i])]
-
-    #     # Deal remaining cards from left to right
-    #     current_house = 0
-    #     while self.deck:
-    #         if len(self.houses[current_house]) < 8:
-    #             self.houses[current_house].append(self.deck.pop())
-    #         current_house = (current_house + 1) % 10
-
     def display_cards(self):
         self.game_canvas.delete("card")
         self.card_items.clear()
