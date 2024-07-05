@@ -39,6 +39,43 @@ class PatienceGame:
         self.create_deal_button()
         self.create_hint_button()
 
+        self.highlight_rectangles = []
+
+        self.zoom_factor = 1.0
+        self.create_zoom_buttons()
+
+    def create_zoom_buttons(self):
+        zoom_frame = ttk.Frame(self.master)
+        zoom_frame.pack(side=tk.BOTTOM, pady=5)
+
+        self.zoom_in_button = ttk.Button(
+            zoom_frame, text="Zoom In", command=self.zoom_in
+        )
+        self.zoom_in_button.pack(side=tk.LEFT, padx=5)
+
+        self.zoom_out_button = ttk.Button(
+            zoom_frame, text="Zoom Out", command=self.zoom_out
+        )
+        self.zoom_out_button.pack(side=tk.LEFT, padx=5)
+
+    def zoom_in(self):
+        if self.zoom_factor < 2.0:  # Limit max zoom
+            self.zoom_factor *= 1.2
+            self.resize_cards()
+            self.display_cards()
+
+    def zoom_out(self):
+        if self.zoom_factor > 0.5:  # Limit min zoom
+            self.zoom_factor /= 1.2
+            self.resize_cards()
+            self.display_cards()
+
+    def resize_cards(self):
+        self.card_width = int(80 * self.zoom_factor)
+        self.card_height = int(120 * self.zoom_factor)
+        self.card_images = self.load_card_images()
+        self.create_house_areas()  # Add this line
+
     def center_window(self, width, height):
         screen_width = self.master.winfo_screenwidth()
         screen_height = self.master.winfo_screenheight()
@@ -67,6 +104,7 @@ class PatienceGame:
         self.create_house_areas()
 
     def create_house_areas(self):
+        self.game_canvas.delete("house_area")  # Clear existing house areas
         for i in range(10):
             x = 60 + i * (self.card_width + 20)
             y = 20
@@ -77,6 +115,7 @@ class PatienceGame:
                 y + self.card_height,
                 outline="#FFD700",
                 width=2,
+                tags="house_area",
             )
 
     def create_status_bar(self):
@@ -186,7 +225,7 @@ class PatienceGame:
         self.card_items.clear()
 
         x_spacing = self.card_width + 20
-        y_spacing = 30
+        y_spacing = int(30 * self.zoom_factor)
 
         for house_idx, house in enumerate(self.houses):
             x = 60 + house_idx * x_spacing
@@ -416,11 +455,24 @@ class PatienceGame:
 
     def highlight_card(self, card):
         item = self.get_card_item(card)
-        self.game_canvas.itemconfig(item, outline="yellow", width=3)
+        x, y = self.game_canvas.coords(item)
+        highlight = self.game_canvas.create_rectangle(
+            x,
+            y,
+            x + self.card_width,
+            y + self.card_height,
+            outline="yellow",
+            width=3,
+            fill="",
+        )
+        self.highlight_rectangles.append(highlight)
+        self.game_canvas.tag_raise(highlight)
+        self.game_canvas.tag_raise(item)
 
     def clear_highlights(self):
-        for item in self.card_items:
-            self.game_canvas.itemconfig(item, outline="", width=1)
+        for rect in self.highlight_rectangles:
+            self.game_canvas.delete(rect)
+        self.highlight_rectangles.clear()
 
 
 if __name__ == "__main__":
