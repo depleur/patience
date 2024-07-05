@@ -1,5 +1,3 @@
-`\*\*\*\*```markdown
-
 # Patience Card Game
 
 Welcome to the Patience Card Game! This is a classic card game implemented in Python using the Tkinter library for the GUI and the PIL library for image handling. The game is similar to Solitaire, where the goal is to move all cards to the foundation piles following specific rules.
