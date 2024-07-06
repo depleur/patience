@@ -359,7 +359,7 @@ class PatienceGame:
 
     def is_valid_move(self, card, target_house):
         if not target_house:  # If the target house is empty
-            return card.rank == 13  # Only King can be placed on an empty house
+            return True  # Allow any card to be placed on an empty house
 
         target_card = target_house[-1]
 
