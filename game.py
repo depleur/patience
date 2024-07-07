@@ -462,6 +462,8 @@ class PatienceGame:
         self.hint_button = tk.Button(self.master, text="Hint", command=self.show_hint)
         self.hint_button.pack(side=tk.BOTTOM, pady=10)
 
+    # TODO: Make better hints.
+
     def show_hint(self):
         self.clear_highlights()
         hint_found = False
@@ -487,9 +489,9 @@ class PatienceGame:
                     break
 
         if not hint_found:
-            self.status_var.set(
-                "No hints available. Try moving cards to reveal new options."
-            )
+            self.status_var.set("No hints available.")
+
+    # TODO: Make better card highlighting. Try highlighting the card entirely instead of just the border.
 
     def highlight_card(self, card):
         item = self.get_card_item(card)
@@ -511,6 +513,8 @@ class PatienceGame:
         for rect in self.highlight_rectangles:
             self.game_canvas.delete(rect)
         self.highlight_rectangles.clear()
+
+    # TODO: Add dialog box with rules at the beginning of the game, with optional checkbox to not show again.
 
 
 if __name__ == "__main__":
