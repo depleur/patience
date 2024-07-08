@@ -3,6 +3,7 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 import random
 import time
+from math import sin, pi
 
 
 class Card:
@@ -36,6 +37,7 @@ class PatienceGame:
         self.status_var.set("Welcome to Patience! Click 'Deal Cards' to begin.")
 
         self.highlight_rectangles = []
+        self.strobe_after_id = None
 
         self.zoom_factor = 1.0
         self.create_control_buttons()
@@ -462,7 +464,7 @@ class PatienceGame:
         self.hint_button = tk.Button(self.master, text="Hint", command=self.show_hint)
         self.hint_button.pack(side=tk.BOTTOM, pady=10)
 
-    # TODO: Make better hints.
+    # FIXME: Better hints.
 
     def show_hint(self):
         self.clear_highlights()
@@ -489,30 +491,63 @@ class PatienceGame:
                     break
 
         if not hint_found:
-            self.status_var.set("No hints available.")
+            self.status_var.set(
+                "No hints available. Try moving cards to reveal new options."
+            )
 
-    # TODO: Make better card highlighting. Try highlighting the card entirely instead of just the border.
+    # FIXME: Make better card highlighting. Try highlighting the card entirely instead of just the border.
 
     def highlight_card(self, card):
+        self.clear_highlights()  # Clear existing highlights
         item = self.get_card_item(card)
         x, y = self.game_canvas.coords(item)
+
+        # Create a semi-transparent rectangle over the entire card
         highlight = self.game_canvas.create_rectangle(
             x,
             y,
             x + self.card_width,
             y + self.card_height,
-            outline="yellow",
-            width=3,
-            fill="",
+            fill="yellow",
+            stipple="gray50",
+            outline="",
+            tags="highlight",
         )
+
         self.highlight_rectangles.append(highlight)
         self.game_canvas.tag_raise(highlight)
         self.game_canvas.tag_raise(item)
+
+        # Start the strobing effect
+        self.strobe_highlight(highlight, 5)  # 5 seconds of strobing
+
+    def strobe_highlight(self, highlight, duration):
+        start_time = time.time()
+
+        def update_opacity():
+            elapsed = time.time() - start_time
+            if elapsed < duration:
+                # Calculate opacity using a sine wave for smooth pulsing
+                opacity = int(sin(elapsed * pi) * 63 + 64)  # Reduced opacity range
+                color = f"#{opacity:02x}ffff"  # Yellow with varying opacity
+                self.game_canvas.itemconfig(highlight, fill=color)
+                self.strobe_after_id = self.master.after(
+                    50, update_opacity
+                )  # Update every 50ms
+            else:
+                self.game_canvas.delete(highlight)
+                self.highlight_rectangles.remove(highlight)
+                self.strobe_after_id = None
+
+        update_opacity()
 
     def clear_highlights(self):
         for rect in self.highlight_rectangles:
             self.game_canvas.delete(rect)
         self.highlight_rectangles.clear()
+        if self.strobe_after_id is not None:
+            self.master.after_cancel(self.strobe_after_id)
+            self.strobe_after_id = None
 
     # TODO: Add dialog box with rules at the beginning of the game, with optional checkbox to not show again.
 
