@@ -516,6 +516,12 @@ class PatienceGame:
 
     # TODO: Add dialog box with rules at the beginning of the game, with optional checkbox to not show again.
 
+    # TODO: Add scoring system and timer.
+
+    # TODO: Add undo button.
+
+    # TODO: Add gamestate check to make sure game is winnable after each move, and warn player if not.
+
 
 if __name__ == "__main__":
     root = tk.Tk()
