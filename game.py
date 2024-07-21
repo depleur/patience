@@ -29,7 +29,7 @@ class PatienceGame:
         self.create_status_bar()
 
         self.card_images = self.load_card_images()
-        self.houses = [[] for _ in range(10)]
+        self.houses = [[] for _ in range(13)]
         self.end_houses = [[] for _ in range(4)]
         self.card_items = {}
         self.drag_data = {"x": 0, "y": 0, "item": None}
@@ -118,8 +118,8 @@ class PatienceGame:
         self.create_house_areas()
 
     def create_house_areas(self):
-        self.game_canvas.delete("house_area")  # Clear existing house areas
-        for i in range(10):
+        self.game_canvas.delete("house_area")
+        for i in range(13):  # Change to 13 houses
             x = 60 + i * (self.card_width + 20)
             y = 20
             self.game_canvas.create_rectangle(
@@ -214,47 +214,29 @@ class PatienceGame:
         self.deal_button.config(state=tk.NORMAL)
 
     def animated_deal(self):
-        self.deal_button.config(state=tk.DISABLED)  # Disable the button during dealing
+        self.deal_button.config(state=tk.DISABLED)
         self.status_var.set("Dealing cards...")
 
         # Clear existing cards
-        self.houses = [[] for _ in range(10)]
+        self.houses = [[] for _ in range(13)]
         self.end_houses = [[] for _ in range(4)]
         self.deck = self.create_deck()
 
-        house_card_counts = [8, 8, 8, 7, 6, 5, 4, 3, 2, 1]
+        # Adjust house_card_counts for 13 houses, total should not exceed 52
+        house_card_counts = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
 
         # Deal cards from left to right for the first iteration
-        for i in range(10):
+        for i in range(13):
             for _ in range(house_card_counts[i]):
-                self.houses[i].append(self.deck.pop())
-                self.display_cards()
-                self.master.update()
-                time.sleep(0.1)
+                if self.deck:
+                    self.houses[i].append(self.deck.pop())
+                    self.display_cards()
+                    self.master.update()
+                    time.sleep(0.1)
+                else:
+                    break
 
-        # Deal remaining cards, alternating direction
-        current_house = 0
-        left_to_right = False  # Start right to left for the second round
-        while self.deck:
-            if len(self.houses[current_house]) < 8:
-                self.houses[current_house].append(self.deck.pop())
-                self.display_cards()
-                self.master.update()
-                time.sleep(0.1)
-
-            if left_to_right:
-                current_house = (current_house + 1) % 10
-                if current_house == 0:
-                    left_to_right = False
-            else:
-                current_house = (current_house - 1) % 10
-                if current_house == 9:
-                    left_to_right = True
-
-        self.status_var.set("Cards dealt. Good luck!")
-        self.deal_button.config(
-            state=tk.DISABLED
-        )  # Keep the button disabled after dealing
+        # No need for additional dealing as all cards are distributed
 
         self.status_var.set("Cards dealt. Good luck!")
         self.deal_button.config(state=tk.DISABLED)
@@ -320,7 +302,9 @@ class PatienceGame:
         x, y = self.game_canvas.coords(dragged_item)
 
         # Find the target house
-        target_house_index = min(9, max(0, int((x - 60) / (self.card_width + 20))))
+        target_house_index = min(
+            12, max(0, int((x - 60) / (self.card_width + 20)))
+        )  # Change to 12 (13 houses - 1)
         target_house = self.houses[target_house_index]
 
         source_house = self.drag_data["source_house"]
@@ -470,7 +454,6 @@ class PatienceGame:
         self.clear_highlights()
         hint_found = False
 
-        # Check for moves between houses
         for i, source_house in enumerate(self.houses):
             if not source_house:
                 continue
