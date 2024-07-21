@@ -12,6 +12,7 @@ class RulesManager:
     def __init__(self, master):
         self.master = master
         self.show_rules_on_startup = tk.BooleanVar(value=True)
+        self.zoom_factor = tk.DoubleVar(value=1.0)
         self.load_preferences()
 
     def show_rules(self):
@@ -91,10 +92,21 @@ Good luck and enjoy the game!"""
             with open("patience_preferences.json", "r") as f:
                 prefs = json.load(f)
                 self.show_rules_on_startup.set(prefs.get("show_rules_on_startup", True))
+                self.zoom_factor.set(prefs.get("zoom_factor", 1.0))
         except FileNotFoundError:
-            pass  # Use default value (True) if file doesn't exist
+            pass  # Use default values if file doesn't exist
 
     def save_preferences(self):
-        prefs = {"show_rules_on_startup": self.show_rules_on_startup.get()}
+        prefs = {
+            "show_rules_on_startup": self.show_rules_on_startup.get(),
+            "zoom_factor": self.zoom_factor.get(),
+        }
         with open("patience_preferences.json", "w") as f:
             json.dump(prefs, f)
+
+    def get_zoom_factor(self):
+        return self.zoom_factor.get()
+
+    def set_zoom_factor(self, value):
+        self.zoom_factor.set(value)
+        self.save_preferences()
