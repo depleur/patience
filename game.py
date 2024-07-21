@@ -21,13 +21,12 @@ class PatienceGame:
         self.master = master
         self.master.title("Patience Card Game")
 
+        self.rules_manager = RulesManager(self.master)
+
         self.card_width = 80
         self.card_height = 120
 
         self.center_window(1200, 800)
-
-        self.rules_manager = RulesManager(self.master)
-
         self.create_menu()
         self.create_game_area()
         self.create_status_bar()
@@ -43,10 +42,9 @@ class PatienceGame:
         self.highlight_rectangles = []
         self.strobe_after_id = None
 
-        self.zoom_factor = 1.0
+        self.zoom_factor = self.rules_manager.get_zoom_factor()
         self.create_control_buttons()
 
-        self.rules_manager = RulesManager(self.master)
         self.master.after(100, self.rules_manager.show_rules)
 
     def create_clear_button(self):
@@ -82,14 +80,20 @@ class PatienceGame:
     def zoom_in(self):
         if self.zoom_factor < 2.0:  # Limit max zoom
             self.zoom_factor *= 1.2
+            self.rules_manager.set_zoom_factor(self.zoom_factor)
             self.resize_cards()
             self.display_cards()
 
     def zoom_out(self):
         if self.zoom_factor > 0.5:  # Limit min zoom
             self.zoom_factor /= 1.2
+            self.rules_manager.set_zoom_factor(self.zoom_factor)
             self.resize_cards()
             self.display_cards()
+
+    def on_closing(self):
+        self.rules_manager.save_preferences()
+        self.master.destroy()
 
     def resize_cards(self):
         self.card_width = int(80 * self.zoom_factor)
@@ -235,7 +239,7 @@ class PatienceGame:
         self.deck = self.create_deck()
 
         # Adjust house_card_counts for 13 houses, total should not exceed 52
-        house_card_counts = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+        house_card_counts = [8, 8, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0]
 
         # Deal cards from left to right for the first iteration
         for i in range(13):
