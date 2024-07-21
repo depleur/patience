@@ -3,11 +3,6 @@ from tkinter import ttk
 import json
 
 
-import tkinter as tk
-from tkinter import ttk
-import json
-
-
 class RulesManager:
     def __init__(self, master):
         self.master = master

@@ -47,6 +47,8 @@ class PatienceGame:
 
         self.master.after(100, self.rules_manager.show_rules)
 
+        self.master.bind("<F11>", lambda event: self.toggle_fullscreen())
+
     def create_clear_button(self):
         self.clear_button = ttk.Button(
             self.master, text="Clear Board", command=self.clear_board
@@ -117,6 +119,7 @@ class PatienceGame:
         game_menu.add_command(label="New Game", command=self.new_game)
         game_menu.add_command(label="Restart", command=self.restart_game)
         game_menu.add_command(label="Show Rules", command=self.rules_manager.show_rules)
+        game_menu.add_command(label="Toggle Fullscreen", command=self.toggle_fullscreen)
         game_menu.add_separator()
         game_menu.add_command(label="Quit", command=self.on_closing)
 
@@ -191,6 +194,11 @@ class PatienceGame:
             zoom_frame, text="Zoom Out", command=self.zoom_out
         )
         self.zoom_out_button.pack(side=tk.LEFT, padx=2)
+
+        self.fullscreen_button = ttk.Button(
+            control_frame, text="Fullscreen", command=self.toggle_fullscreen
+        )
+        self.fullscreen_button.pack(side=tk.LEFT, padx=5)
 
     def restart_game(self):
         self.new_game()
@@ -547,6 +555,14 @@ class PatienceGame:
         if self.strobe_after_id is not None:
             self.master.after_cancel(self.strobe_after_id)
             self.strobe_after_id = None
+
+    def toggle_fullscreen(self):
+        is_fullscreen = self.master.attributes("-fullscreen")
+        self.master.attributes("-fullscreen", not is_fullscreen)
+        if not is_fullscreen:
+            self.status_var.set("Fullscreen mode enabled. Press F11 to exit.")
+        else:
+            self.status_var.set("Fullscreen mode disabled.")
 
     # TODO: Add dialog box with rules at the beginning of the game, with optional checkbox to not show again.
 
