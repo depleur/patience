@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 import random
 import time
 from math import sin, pi
+from rules import RulesManager
 
 
 class Card:
@@ -24,6 +25,9 @@ class PatienceGame:
         self.card_height = 120
 
         self.center_window(1200, 800)
+
+        self.rules_manager = RulesManager(self.master)
+
         self.create_menu()
         self.create_game_area()
         self.create_status_bar()
@@ -41,6 +45,9 @@ class PatienceGame:
 
         self.zoom_factor = 1.0
         self.create_control_buttons()
+
+        self.rules_manager = RulesManager(self.master)
+        self.master.after(100, self.rules_manager.show_rules)
 
     def create_clear_button(self):
         self.clear_button = ttk.Button(
@@ -105,8 +112,13 @@ class PatienceGame:
         menu_bar.add_cascade(label="Game", menu=game_menu)
         game_menu.add_command(label="New Game", command=self.new_game)
         game_menu.add_command(label="Restart", command=self.restart_game)
+        game_menu.add_command(label="Show Rules", command=self.rules_manager.show_rules)
         game_menu.add_separator()
-        game_menu.add_command(label="Quit", command=self.master.quit)
+        game_menu.add_command(label="Quit", command=self.on_closing)
+
+    def on_closing(self):
+        self.rules_manager.save_preferences()
+        self.master.destroy()
 
     def create_game_area(self):
         self.game_frame = ttk.Frame(self.master, padding="10")
@@ -544,4 +556,5 @@ class PatienceGame:
 if __name__ == "__main__":
     root = tk.Tk()
     game = PatienceGame(root)
+    root.protocol("WM_DELETE_WINDOW", game.on_closing)
     root.mainloop()
