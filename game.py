@@ -32,7 +32,7 @@ class PatienceGame:
         self.create_status_bar()
 
         self.card_images = self.load_card_images()
-        self.houses = [[] for _ in range(13)]
+        self.houses = [[] for _ in range(10)]
         self.end_houses = [[] for _ in range(4)]
         self.card_items = {}
         self.drag_data = {"x": 0, "y": 0, "item": None}
@@ -138,7 +138,7 @@ class PatienceGame:
 
     def create_house_areas(self):
         self.game_canvas.delete("house_area")
-        for i in range(13):  # Change to 13 houses
+        for i in range(10):  # Change back to 10 houses
             x = 60 + i * (self.card_width + 20)
             y = 20
             self.game_canvas.create_rectangle(
@@ -242,15 +242,15 @@ class PatienceGame:
         self.status_var.set("Dealing cards...")
 
         # Clear existing cards
-        self.houses = [[] for _ in range(13)]
+        self.houses = [[] for _ in range(10)]  # Change back to 10 houses
         self.end_houses = [[] for _ in range(4)]
         self.deck = self.create_deck()
 
-        # Adjust house_card_counts for 13 houses, total should not exceed 52
-        house_card_counts = [8, 8, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0]
+        # Adjust house_card_counts for 10 houses
+        house_card_counts = [8, 8, 8, 7, 6, 5, 4, 3, 2, 1]
 
         # Deal cards from left to right for the first iteration
-        for i in range(13):
+        for i in range(10):  # Change back to 10 houses
             for _ in range(house_card_counts[i]):
                 if self.deck:
                     self.houses[i].append(self.deck.pop())
@@ -260,7 +260,9 @@ class PatienceGame:
                 else:
                     break
 
-        # No need for additional dealing as all cards are distributed
+        self.status_var.set("Cards dealt. Good luck!")
+        self.deal_button.config(state=tk.DISABLED)
+        self.hint_button.config(state=tk.NORMAL)
 
         self.status_var.set("Cards dealt. Good luck!")
         self.deal_button.config(state=tk.DISABLED)
@@ -327,8 +329,8 @@ class PatienceGame:
 
         # Find the target house
         target_house_index = min(
-            12, max(0, int((x - 60) / (self.card_width + 20)))
-        )  # Change to 12 (13 houses - 1)
+            9, max(0, int((x - 60) / (self.card_width + 20)))
+        )  # Change back to 9 (10 houses - 1)
         target_house = self.houses[target_house_index]
 
         source_house = self.drag_data["source_house"]

@@ -164,3 +164,4 @@ cython_debug/
 
 patience_preferences.json
 .vscode/*
+test.py
