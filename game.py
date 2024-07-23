@@ -43,57 +43,11 @@ class PatienceGame:
         self.strobe_after_id = None
 
         self.zoom_factor = self.rules_manager.get_zoom_factor()
-        self.resize_cards()  # Apply saved zoom factor
         self.create_control_buttons()
-
-        # Apply saved fullscreen preference
-        self.set_fullscreen(self.rules_manager.get_fullscreen())
 
         self.master.after(100, self.rules_manager.show_rules)
 
         self.master.bind("<F11>", lambda event: self.toggle_fullscreen())
-
-    # def create_test_win_condition(self):
-    #     # Clear existing cards
-    #     self.houses = [[] for _ in range(10)]
-    #     self.end_houses = []
-
-    #     # Define the colors and ranks
-    #     colors = ["black", "red", "black", "red"]
-    #     ranks = list(range(13, 0, -1))  # 13 (King) to 1 (Ace)
-
-    #     for color_start in range(
-    #         2
-    #     ):  # Create two sets of houses starting with black and red
-    #         house = []
-    #         for i, rank in enumerate(ranks):
-    #             # Alternate colors for each card
-    #             color = colors[(i + color_start) % 2]
-
-    #             # Choose a suit based on the color
-    #             if color == "black":
-    #                 suit = "spades" if i % 2 == 0 else "clubs"
-    #             else:
-    #                 suit = "hearts" if i % 2 == 0 else "diamonds"
-
-    #             card = Card(suit, rank, self.card_images[(suit, rank)])
-    #             card.color = color
-    #             house.append(card)
-    #         self.end_houses.append(house)
-
-    #     # Create two more houses to have a total of 4
-    #     self.end_houses.extend([house.copy() for house in self.end_houses])
-
-    #     self.display_cards()
-
-    # def test_win_condition(self):
-    #     self.create_test_win_condition()
-    #     if self.check_win():
-    #         self.status_var.set("Win condition test passed!")
-    #     else:
-    #         self.status_var.set(
-    #             "Win condition test failed. Check the check_win method."
-    #         )
 
     def create_clear_button(self):
         self.clear_button = ttk.Button(
@@ -138,6 +92,10 @@ class PatienceGame:
             self.rules_manager.set_zoom_factor(self.zoom_factor)
             self.resize_cards()
             self.display_cards()
+
+    def on_closing(self):
+        self.rules_manager.save_preferences()
+        self.master.destroy()
 
     def resize_cards(self):
         self.card_width = int(80 * self.zoom_factor)
@@ -238,17 +196,9 @@ class PatienceGame:
         self.zoom_out_button.pack(side=tk.LEFT, padx=2)
 
         self.fullscreen_button = ttk.Button(
-            control_frame, text="Toggle Fullscreen", command=self.toggle_fullscreen
+            control_frame, text="Fullscreen", command=self.toggle_fullscreen
         )
-
         self.fullscreen_button.pack(side=tk.LEFT, padx=5)
-
-    # DO NOT TOUCH THIS UNLESS MENTIONED BY THE DEV.
-
-    # self.test_button = ttk.Button(
-    #     control_frame, text="Test Win", command=self.test_win_condition
-    # )
-    # self.test_button.pack(side=tk.LEFT, padx=5)
 
     def restart_game(self):
         self.new_game()
@@ -323,30 +273,38 @@ class PatienceGame:
         self.card_items.clear()
 
         x_spacing = self.card_width + 20
-        y_spacing = int(30 * self.zoom_factor)
-        stack_spacing = int(25 * self.zoom_factor)
+        y_spacing = int(30 * self.zoom_factor)  # Adjust this value to increase spacing
+        stack_spacing = int(
+            25 * self.zoom_factor
+        )  # New variable for spacing between stacked cards
 
-        # Display cards in main houses
         for house_idx, house in enumerate(self.houses):
             x = 60 + house_idx * x_spacing
             y = 20
-            for card in house:
+            for card_idx, card in enumerate(house):
                 item = self.game_canvas.create_image(
                     x, y, image=card.image, anchor=tk.NW, tags="card"
                 )
                 self.card_items[item] = card
+                self.game_canvas.tag_bind(item, "<ButtonPress-1>", self.on_card_press)
+                self.game_canvas.tag_bind(
+                    item, "<ButtonRelease-1>", self.on_card_release
+                )
+                self.game_canvas.tag_bind(item, "<B1-Motion>", self.on_card_motion)
+
+                # Increase the spacing between stacked cards
                 y += stack_spacing
 
-        # Display cards in end houses
+        # Display cards in end houses (if implemented)
         for house_idx, house in enumerate(self.end_houses):
-            x = 60 + house_idx * x_spacing
-            y = 400  # Adjust this value to position end houses appropriately
+            x = 300 + house_idx * x_spacing
+            y = 600
             for card in house:
                 item = self.game_canvas.create_image(
                     x, y, image=card.image, anchor=tk.NW, tags="card"
                 )
                 self.card_items[item] = card
-                y += stack_spacing
+                y += y_spacing
 
     def on_card_press(self, event):
         item = self.game_canvas.find_closest(event.x, event.y)[0]
@@ -469,28 +427,15 @@ class PatienceGame:
             self.drag_data["y"] = event.y
 
     def check_win(self):
-        # Check if all 4 end houses are complete
-        if len(self.end_houses) != 4:
-            return False
-
-        for end_house in self.end_houses:
-            # Each end house should have 13 cards
-            if len(end_house) != 13:
+        for house in self.end_houses:
+            if len(house) != 13:
                 return False
-
-            # Check if the end house starts with King and ends with Ace
-            if end_house[0].rank != 13 or end_house[-1].rank != 1:
+            if house[0].rank != 1 or house[-1].rank != 13:
                 return False
-
-            # Check if the cards are in descending order and alternating colors
-            for i in range(1, 13):
-                if (
-                    end_house[i].rank != end_house[i - 1].rank - 1
-                    or end_house[i].color == end_house[i - 1].color
-                ):
-                    return False
-
-        # If we've made it here, all end houses are complete and correct
+            if not all(house[i].rank == house[i - 1].rank + 1 for i in range(1, 13)):
+                return False
+            if not all(house[i].color != house[i - 1].color for i in range(1, 13)):
+                return False
         return True
 
     def get_card_item(self, card):
@@ -614,20 +559,12 @@ class PatienceGame:
             self.strobe_after_id = None
 
     def toggle_fullscreen(self):
-        is_fullscreen = not self.master.attributes("-fullscreen")
-        self.set_fullscreen(is_fullscreen)
-
-    def set_fullscreen(self, is_fullscreen):
-        self.master.attributes("-fullscreen", is_fullscreen)
-        self.rules_manager.set_fullscreen(is_fullscreen)
-        if is_fullscreen:
+        is_fullscreen = self.master.attributes("-fullscreen")
+        self.master.attributes("-fullscreen", not is_fullscreen)
+        if not is_fullscreen:
             self.status_var.set("Fullscreen mode enabled. Press F11 to exit.")
         else:
             self.status_var.set("Fullscreen mode disabled.")
-
-    def on_closing(self):
-        self.rules_manager.save_preferences()
-        self.master.destroy()
 
     # TODO: Add dialog box with rules at the beginning of the game, with optional checkbox to not show again.
 
@@ -642,5 +579,4 @@ if __name__ == "__main__":
     root = tk.Tk()
     game = PatienceGame(root)
     root.protocol("WM_DELETE_WINDOW", game.on_closing)
-    root.bind("<F11>", lambda event: game.toggle_fullscreen())
     root.mainloop()
