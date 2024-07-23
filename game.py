@@ -328,39 +328,36 @@ class PatienceGame:
         if house:
             card_index = house.index(card)
             movable_stack = self.get_movable_stack(house, card_index)
-            if movable_stack:
-                self.drag_data = {
-                    "x": event.x,
-                    "y": event.y,
-                    "item": item,
-                    "cards": movable_stack,
-                    "source_house": house,
-                    "source_index": card_index,
-                    "start_positions": [
-                        (self.game_canvas.coords(self.get_card_item(c)))
-                        for c in movable_stack
-                    ],
-                }
-                for drag_card in movable_stack:
-                    self.game_canvas.tag_raise(self.get_card_item(drag_card))
-            else:
-                self.drag_data = {"x": 0, "y": 0, "item": None}
+            self.drag_data = {
+                "x": event.x,
+                "y": event.y,
+                "item": item,
+                "cards": movable_stack,
+                "source_house": house,
+                "source_index": card_index,
+                "start_positions": [
+                    (self.game_canvas.coords(self.get_card_item(c)))
+                    for c in movable_stack
+                ],
+            }
+            for drag_card in movable_stack:
+                self.game_canvas.tag_raise(self.get_card_item(drag_card))
         else:
             self.drag_data = {"x": 0, "y": 0, "item": None}
 
     def get_movable_stack(self, house, card_index):
-        if card_index < len(house) - 1:
-            # Check if the cards below follow the rule (descending rank, alternating color)
-            for i in range(card_index + 1, len(house)):
-                if (
-                    house[i].rank != house[i - 1].rank - 1
-                    or house[i].color == house[i - 1].color
-                ):
-                    return None  # Can't move this card as it's not at the bottom of a valid stack
+        movable_stack = [house[card_index]]
 
-        # If we reach here, we can move the card and any valid cards above it
-        movable_stack = house[card_index:]
-        return movable_stack if len(movable_stack) > 0 else None
+        # Check cards above the selected card
+        for i in range(card_index + 1, len(house)):
+            if (house[i].rank == house[i - 1].rank - 1) and (
+                house[i].color != house[i - 1].color
+            ):
+                movable_stack.append(house[i])
+            else:
+                break
+
+        return movable_stack
 
     def update_game_state(self, dragged_item):
         dragged_cards = self.drag_data["cards"]
@@ -422,7 +419,7 @@ class PatienceGame:
         if (moving_card.rank == target_card.rank - 1) and (
             moving_card.color != target_card.color
         ):
-            # If it's a valid move, check if all cards in the stack maintain the alternating color and descending rank
+            # Check if all cards in the stack maintain the alternating color and descending rank
             for i in range(1, len(cards)):
                 if not (
                     cards[i].rank == cards[i - 1].rank - 1
