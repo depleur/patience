@@ -327,39 +327,56 @@ class PatienceGame:
         house_index, house = self.find_card_house(card)
         if house:
             card_index = house.index(card)
-            self.drag_data = {
-                "x": event.x,
-                "y": event.y,
-                "item": item,
-                "cards": house[card_index:],
-                "source_house": house,
-                "source_index": card_index,
-            }
-            for drag_card in self.drag_data["cards"]:
-                self.game_canvas.tag_raise(self.get_card_item(drag_card))
+            movable_stack = self.get_movable_stack(house, card_index)
+            if movable_stack:
+                self.drag_data = {
+                    "x": event.x,
+                    "y": event.y,
+                    "item": item,
+                    "cards": movable_stack,
+                    "source_house": house,
+                    "source_index": card_index,
+                }
+                for drag_card in movable_stack:
+                    self.game_canvas.tag_raise(self.get_card_item(drag_card))
+            else:
+                self.drag_data = {"x": 0, "y": 0, "item": None}
+        else:
+            self.drag_data = {"x": 0, "y": 0, "item": None}
+
+    def get_movable_stack(self, house, card_index):
+        if card_index < len(house) - 1:
+            # Check if the cards below follow the rule (descending rank, alternating color)
+            for i in range(card_index + 1, len(house)):
+                if (
+                    house[i].rank != house[i - 1].rank - 1
+                    or house[i].color == house[i - 1].color
+                ):
+                    return None  # Can't move this card as it's not at the bottom of a valid stack
+
+        # If we reach here, we can move the card and any valid cards above it
+        movable_stack = house[card_index:]
+        return movable_stack if len(movable_stack) > 0 else None
 
     def update_game_state(self, dragged_item):
-        dragged_card = self.card_items[dragged_item]
+        dragged_cards = self.drag_data["cards"]
         x, y = self.game_canvas.coords(dragged_item)
 
         # Find the target house
-        target_house_index = min(
-            9, max(0, int((x - 60) / (self.card_width + 20)))
-        )  # Change back to 9 (10 houses - 1)
+        target_house_index = min(9, max(0, int((x - 60) / (self.card_width + 20))))
         target_house = self.houses[target_house_index]
 
         source_house = self.drag_data["source_house"]
-        source_index = self.drag_data["source_index"]
 
         if source_house != target_house and self.is_valid_move(
-            dragged_card, target_house
+            dragged_cards, target_house
         ):
-            cards_to_move = source_house[source_index:]
-            self.move_card(dragged_card, source_house, target_house)
+            self.move_card(dragged_cards, source_house, target_house)
             self.display_cards()  # Redraw all cards
         else:
             # If the move is invalid, return the cards to their original position
             self.display_cards()
+
         if self.check_win():
             self.status_var.set("Congratulations! You've won the game!")
             self.deal_button.config(state=tk.NORMAL)
@@ -368,14 +385,14 @@ class PatienceGame:
             self.deal_button.config(state=tk.NORMAL)
 
     def on_card_release(self, event):
-        if self.drag_data["item"]:
+        if self.drag_data["item"] and self.drag_data["cards"]:
             self.update_game_state(self.drag_data["item"])
             if self.check_win():
                 self.status_var.set("Congratulations! You've won the game!")
-        self.drag_data = {"x": 0, "y": 0, "item": None}
+        self.drag_data = {"x": 0, "y": 0, "item": None, "cards": None}
 
     def on_card_motion(self, event):
-        if self.drag_data["item"]:
+        if self.drag_data["item"] and self.drag_data["cards"]:
             dx = event.x - self.drag_data["x"]
             dy = event.y - self.drag_data["y"]
             for card in self.drag_data["cards"]:
@@ -384,23 +401,27 @@ class PatienceGame:
             self.drag_data["x"] = event.x
             self.drag_data["y"] = event.y
 
-    def is_valid_move(self, card, target_house):
+    def is_valid_move(self, cards, target_house):
+        if not isinstance(cards, list):
+            cards = [cards]  # Convert single card to a list
+
         if not target_house:  # If the target house is empty
-            return True  # Allow any card to be placed on an empty house
+            return cards[0].rank == 13  # Only King can be placed on an empty house
 
         target_card = target_house[-1]
+        moving_card = cards[0]  # The bottom card of the moving stack
 
-        # Check if the bottom card of the moving unit can be placed on the target card
-        if (card.rank == target_card.rank - 1) and (card.color != target_card.color):
-            # If it's a valid move, check if all cards in the unit maintain the alternating color and descending rank
-            current = card
-            for above_card in card.cards_above:
+        # Check if the bottom card of the moving stack can be placed on the target card
+        if (moving_card.rank == target_card.rank - 1) and (
+            moving_card.color != target_card.color
+        ):
+            # If it's a valid move, check if all cards in the stack maintain the alternating color and descending rank
+            for i in range(1, len(cards)):
                 if not (
-                    above_card.rank == current.rank - 1
-                    and above_card.color != current.color
+                    cards[i].rank == cards[i - 1].rank - 1
+                    and cards[i].color != cards[i - 1].color
                 ):
                     return False
-                current = above_card
             return True
         return False
 
@@ -410,26 +431,27 @@ class PatienceGame:
                 return i, house
         return None, None
 
-    def move_card(self, card, from_house, to_house):
-        # Find the index of the card in the source house
-        index = from_house.index(card)
+    def move_card(self, cards, from_house, to_house):
+        if not isinstance(cards, list):
+            cards = [cards]  # Convert single card to a list
 
-        # Get all cards from this card to the top of the pile
-        cards_to_move = from_house[index:]
+        # Find the index of the first card in the source house
+        index = from_house.index(cards[0])
 
         # Remove these cards from the source house
         from_house[index:] = []
 
-        # If the target house is not empty, update the cards_above of the top card
-        if to_house:
-            to_house[-1].cards_above = cards_to_move
-
         # Add the cards to the target house
-        to_house.extend(cards_to_move)
+        to_house.extend(cards)
 
-        # Clear the cards_above for all moved cards except the bottom one
-        for moved_card in cards_to_move[:-1]:
-            moved_card.cards_above = []
+        # Update the cards_above attribute for the cards
+        for i in range(len(cards) - 1):
+            cards[i].cards_above = [cards[i + 1]]
+        cards[-1].cards_above = []
+
+        # If the target house is not empty, update the cards_above of the previous top card
+        if len(to_house) > len(cards):
+            to_house[-len(cards) - 1].cards_above = [cards[0]]
 
     def on_card_motion(self, event):
         if self.drag_data["item"]:
@@ -465,7 +487,7 @@ class PatienceGame:
             if not source_house:
                 continue
             for j, target_house in enumerate(self.houses):
-                if i != j and self.is_valid_move(source_house[-1], target_house):
+                if i != j and self.is_valid_move([source_house[-1]], target_house):
                     return False
         # Check if any cards can be moved to end houses
         for house in self.houses:
@@ -499,7 +521,7 @@ class PatienceGame:
             if not source_house:
                 continue
             for j, target_house in enumerate(self.houses):
-                if i != j and self.is_valid_move(source_house[-1], target_house):
+                if i != j and self.is_valid_move([source_house[-1]], target_house):
                     self.highlight_card(source_house[-1])
                     hint_found = True
                     break
