@@ -371,9 +371,11 @@ class PatienceGame:
 
         source_house = self.drag_data["source_house"]
 
-        if source_house != target_house and self.is_valid_move(dragged_cards, target_house):
+        if source_house != target_house and self.is_valid_move(
+            dragged_cards, target_house
+        ):
             self.move_card(dragged_cards, source_house, target_house)
-        
+
         self.display_cards()  # Redraw all cards
 
         if self.check_win():
@@ -411,7 +413,7 @@ class PatienceGame:
             cards = [cards]  # Convert single card to a list
 
         if not target_house:  # If the target house is empty
-            return cards[0].rank == 13  # Only King can be placed on an empty house
+            return True  # Any card can be placed on an empty house
 
         target_card = target_house[-1]
         moving_card = cards[0]  # The bottom card of the moving stack
