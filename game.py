@@ -336,6 +336,10 @@ class PatienceGame:
                     "cards": movable_stack,
                     "source_house": house,
                     "source_index": card_index,
+                    "start_positions": [
+                        (self.game_canvas.coords(self.get_card_item(c)))
+                        for c in movable_stack
+                    ],
                 }
                 for drag_card in movable_stack:
                     self.game_canvas.tag_raise(self.get_card_item(drag_card))
@@ -362,20 +366,15 @@ class PatienceGame:
         dragged_cards = self.drag_data["cards"]
         x, y = self.game_canvas.coords(dragged_item)
 
-        # Find the target house
         target_house_index = min(9, max(0, int((x - 60) / (self.card_width + 20))))
         target_house = self.houses[target_house_index]
 
         source_house = self.drag_data["source_house"]
 
-        if source_house != target_house and self.is_valid_move(
-            dragged_cards, target_house
-        ):
+        if source_house != target_house and self.is_valid_move(dragged_cards, target_house):
             self.move_card(dragged_cards, source_house, target_house)
-            self.display_cards()  # Redraw all cards
-        else:
-            # If the move is invalid, return the cards to their original position
-            self.display_cards()
+        
+        self.display_cards()  # Redraw all cards
 
         if self.check_win():
             self.status_var.set("Congratulations! You've won the game!")
@@ -389,17 +388,23 @@ class PatienceGame:
             self.update_game_state(self.drag_data["item"])
             if self.check_win():
                 self.status_var.set("Congratulations! You've won the game!")
-        self.drag_data = {"x": 0, "y": 0, "item": None, "cards": None}
+        self.drag_data = {
+            "x": 0,
+            "y": 0,
+            "item": None,
+            "cards": None,
+            "start_positions": None,
+        }
 
     def on_card_motion(self, event):
         if self.drag_data["item"] and self.drag_data["cards"]:
             dx = event.x - self.drag_data["x"]
             dy = event.y - self.drag_data["y"]
-            for card in self.drag_data["cards"]:
+            for i, card in enumerate(self.drag_data["cards"]):
                 item = self.get_card_item(card)
-                self.game_canvas.move(item, dx, dy)
-            self.drag_data["x"] = event.x
-            self.drag_data["y"] = event.y
+                start_x, start_y = self.drag_data["start_positions"][i]
+                self.game_canvas.moveto(item, start_x + dx, start_y + dy)
+            self.game_canvas.update_idletasks()  # Force immediate update
 
     def is_valid_move(self, cards, target_house):
         if not isinstance(cards, list):
