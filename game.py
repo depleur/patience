@@ -49,6 +49,14 @@ class PatienceGame:
 
         self.master.bind("<F11>", lambda event: self.toggle_fullscreen())
 
+        self.rules_manager = RulesManager(self.master)
+        self.zoom_factor = self.rules_manager.get_zoom_factor()
+        self.apply_zoom()
+
+        # Apply fullscreen preference
+        if self.rules_manager.get_is_fullscreen():
+            self.master.attributes("-fullscreen", True)
+
     def create_clear_button(self):
         self.clear_button = ttk.Button(
             self.master, text="Clear Board", command=self.clear_board
@@ -78,6 +86,13 @@ class PatienceGame:
             zoom_frame, text="Zoom Out", command=self.zoom_out
         )
         self.zoom_out_button.pack(side=tk.LEFT, padx=5)
+
+    def apply_zoom(self):
+        self.card_width = int(80 * self.zoom_factor)
+        self.card_height = int(120 * self.zoom_factor)
+        self.card_images = self.load_card_images()
+        self.create_house_areas()
+        self.display_cards()
 
     def zoom_in(self):
         if self.zoom_factor < 2.0:  # Limit max zoom
@@ -561,6 +576,7 @@ class PatienceGame:
     def toggle_fullscreen(self):
         is_fullscreen = self.master.attributes("-fullscreen")
         self.master.attributes("-fullscreen", not is_fullscreen)
+        self.rules_manager.set_is_fullscreen(not is_fullscreen)
         if not is_fullscreen:
             self.status_var.set("Fullscreen mode enabled. Press F11 to exit.")
         else:
