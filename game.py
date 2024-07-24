@@ -30,6 +30,7 @@ class PatienceGame:
         self.create_menu()
         self.create_game_area()
         self.create_status_bar()
+        self.move_history = []
 
         self.card_images = self.load_card_images()
         self.houses = [[] for _ in range(10)]
@@ -38,6 +39,7 @@ class PatienceGame:
         self.drag_data = {"x": 0, "y": 0, "item": None}
 
         self.initial_deck = None
+        self.interrupt_flag = False
 
         self.status_var.set("Welcome to Patience! Click 'Deal Cards' to begin.")
 
@@ -66,21 +68,28 @@ class PatienceGame:
         self.clear_button.pack(side=tk.BOTTOM, pady=5)
 
     def clear_board(self):
+        self.interrupt_flag = True
+        self.master.after_cancel(
+            self.master.after_id
+        )  # Cancel any ongoing after() calls
+
         self.houses = [[] for _ in range(10)]
         self.end_houses = [[] for _ in range(4)]
         self.card_items.clear()
         self.game_canvas.delete("card")
-        self.status_var.set(
-            "Board cleared. Click 'Deal Cards' to start a new game or 'Redeal' to use the previous configuration."
-        )
+        self.move_history.clear()
+
+        self.status_var.set("Board cleared. Click 'Deal Cards' to start a new game.")
         self.deal_button.config(state=tk.NORMAL)
         self.hint_button.config(state=tk.DISABLED)
-        # Only disable redeal if there's no initial deck
+        self.undo_button.config(state=tk.DISABLED)
         if self.initial_deck is None:
             self.redeal_button.config(state=tk.DISABLED)
         else:
             self.redeal_button.config(state=tk.NORMAL)
         self.clear_highlights()
+
+        self.interrupt_flag = False
 
     def create_zoom_buttons(self):
         zoom_frame = ttk.Frame(self.master)
@@ -188,6 +197,8 @@ class PatienceGame:
         self.initial_deck = None
         self.status_var.set("New game started. Click 'Deal Cards' to begin.")
         self.redeal_button.config(state=tk.DISABLED)  # Disable redeal button
+        self.move_history.clear()
+        self.undo_button.config(state=tk.DISABLED)
 
     def create_control_buttons(self):
         control_frame = ttk.Frame(self.master)
@@ -208,6 +219,11 @@ class PatienceGame:
             control_frame, text="Hint", command=self.show_hint
         )
         self.hint_button.pack(side=tk.LEFT, padx=5)
+
+        self.undo_button = ttk.Button(
+            control_frame, text="Undo", command=self.undo_move, state=tk.DISABLED
+        )
+        self.undo_button.pack(side=tk.LEFT, padx=5)
 
         self.clear_button = ttk.Button(
             control_frame, text="Clear Board", command=self.clear_board
@@ -275,32 +291,40 @@ class PatienceGame:
         self.deal_button.config(state=tk.DISABLED)
         self.status_var.set("Dealing cards...")
 
-        # Clear existing cards
         self.houses = [[] for _ in range(10)]
         self.end_houses = [[] for _ in range(4)]
         self.deck = self.create_deck()
 
-        # Always save the initial deck configuration
         self.initial_deck = self.deck.copy()
 
-        # Adjust house_card_counts for 10 houses
         house_card_counts = [8, 8, 8, 7, 6, 5, 4, 3, 2, 1]
 
-        # Deal cards from left to right for the first iteration
-        for i in range(10):  # Change back to 10 houses
-            for _ in range(house_card_counts[i]):
-                if self.deck:
-                    self.houses[i].append(self.deck.pop())
-                    self.display_cards()
-                    self.master.update()
-                    time.sleep(0.1)
-                else:
-                    break
+        def deal_card(house_index, card_count):
+            if self.interrupt_flag:
+                return
 
+            if card_count > 0 and self.deck:
+                self.houses[house_index].append(self.deck.pop())
+                self.display_cards()
+                self.master.update()
+                self.master.after_id = self.master.after(
+                    100, deal_card, house_index, card_count - 1
+                )
+            elif house_index < 9:
+                self.master.after_id = self.master.after(
+                    100, deal_card, house_index + 1, house_card_counts[house_index + 1]
+                )
+            else:
+                self.finish_deal()
+
+        deal_card(0, house_card_counts[0])
+
+    def finish_deal(self):
         self.status_var.set("Cards dealt. Good luck!")
         self.deal_button.config(state=tk.DISABLED)
         self.hint_button.config(state=tk.NORMAL)
-        self.redeal_button.config(state=tk.NORMAL)  # Enable redeal button
+        self.redeal_button.config(state=tk.NORMAL)
+        self.undo_button.config(state=tk.NORMAL)
 
     def redeal_cards(self):
         if self.initial_deck is None:
@@ -310,29 +334,41 @@ class PatienceGame:
         self.deal_button.config(state=tk.DISABLED)
         self.status_var.set("Redealing cards...")
 
-        # Clear existing cards
         self.houses = [[] for _ in range(10)]
         self.end_houses = [[] for _ in range(4)]
         self.deck = self.initial_deck.copy()
 
-        # Adjust house_card_counts for 10 houses
         house_card_counts = [8, 8, 8, 7, 6, 5, 4, 3, 2, 1]
 
-        # Deal cards from left to right for the first iteration
-        for i in range(10):
-            for _ in range(house_card_counts[i]):
-                if self.deck:
-                    self.houses[i].append(self.deck.pop())
-                    self.display_cards()
-                    self.master.update()
-                    time.sleep(0.1)
-                else:
-                    break
+        def redeal_card(house_index, card_count):
+            if self.interrupt_flag:
+                return
 
+            if card_count > 0 and self.deck:
+                self.houses[house_index].append(self.deck.pop())
+                self.display_cards()
+                self.master.update()
+                self.master.after_id = self.master.after(
+                    100, redeal_card, house_index, card_count - 1
+                )
+            elif house_index < 9:
+                self.master.after_id = self.master.after(
+                    100,
+                    redeal_card,
+                    house_index + 1,
+                    house_card_counts[house_index + 1],
+                )
+            else:
+                self.finish_redeal()
+
+        redeal_card(0, house_card_counts[0])
+
+    def finish_redeal(self):
         self.status_var.set("Cards redealt. Good luck!")
         self.deal_button.config(state=tk.DISABLED)
         self.hint_button.config(state=tk.NORMAL)
-        self.redeal_button.config(state=tk.NORMAL)  # Keep redeal button enabled
+        self.redeal_button.config(state=tk.NORMAL)
+        self.undo_button.config(state=tk.NORMAL)
 
     def display_cards(self):
         self.game_canvas.delete("card")
@@ -414,6 +450,8 @@ class PatienceGame:
         return movable_stack if len(movable_stack) > 0 else None
 
     def update_game_state(self, dragged_item):
+        self.save_move()
+
         dragged_cards = self.drag_data["cards"]
         x, y = self.game_canvas.coords(dragged_item)
 
@@ -439,6 +477,7 @@ class PatienceGame:
     def on_card_release(self, event):
         if self.drag_data["item"] and self.drag_data["cards"]:
             self.update_game_state(self.drag_data["item"])
+            self.undo_button.config(state=tk.NORMAL)
             if self.check_win():
                 self.status_var.set("Congratulations! You've won the game!")
         self.drag_data = {
@@ -488,6 +527,11 @@ class PatienceGame:
             if card in house:
                 return i, house
         return None, None
+
+    def save_move(self):
+        if len(self.move_history) >= 5:
+            self.move_history.pop(0)
+        self.move_history.append([house.copy() for house in self.houses])
 
     def move_card(self, cards, from_house, to_house):
         if not isinstance(cards, list):
@@ -662,7 +706,22 @@ class PatienceGame:
         else:
             self.status_var.set("Fullscreen mode disabled.")
 
-    # TODO: Add dialog box with rules at the beginning of the game, with optional checkbox to not show again.
+    def undo_move(self):
+        if not self.move_history:
+            self.show_undo_alert()
+            return
+
+        self.houses = self.move_history.pop()
+        self.display_cards()
+        self.status_var.set("Move undone.")
+
+        if not self.move_history:
+            self.undo_button.config(state=tk.DISABLED)
+
+    def show_undo_alert(self):
+        tk.messagebox.showwarning(
+            "Undo Limit Reached", "You can only undo up to 5 moves."
+        )
 
     # TODO: Add scoring system and timer.
 
