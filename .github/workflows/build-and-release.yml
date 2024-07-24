@@ -30,23 +30,15 @@ jobs:
           pip install pyinstaller
 
       - name: Build with PyInstaller
-        run: pyinstaller --onefile --windowed --add-data "images:images" main.py
-
-      - name: Rename executable
         run: |
-          cd dist
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            mv main.exe patience-${{ matrix.os }}.exe
-          else
-            mv main patience-${{ matrix.os }}
-          fi
-        shell: bash
+          python -c "import sys; print(sys.executable)"
+          python -m PyInstaller --onefile --windowed --add-data "images:images" --name patience main.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: patience-${{ matrix.os }}
-          path: dist/patience-*
+          path: dist/*
 
   release:
     needs: build
@@ -59,7 +51,6 @@ jobs:
         uses: actions/download-artifact@v3
 
       - name: Create Release
-        id: create_release
         uses: softprops/action-gh-release@v1
         with:
           files: |

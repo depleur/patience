@@ -5,6 +5,8 @@ import random
 import time
 from math import sin, pi
 from rules import RulesManager
+import os
+import sys
 
 
 class Card:
@@ -60,6 +62,31 @@ class PatienceGame:
         # Apply fullscreen preference
         if self.rules_manager.get_is_fullscreen():
             self.master.attributes("-fullscreen", True)
+
+    @staticmethod
+    def resource_path(relative_path):
+        """Get absolute path to resource, works for dev and for PyInstaller"""
+        try:
+            # PyInstaller creates a temp folder and stores path in _MEIPASS
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(".")
+
+        return os.path.join(base_path, relative_path)
+
+    def load_card_images(self):
+        suits = ["hearts", "diamonds", "clubs", "spades"]
+        ranks = list(range(1, 14))
+        card_images = {}
+
+        for suit in suits:
+            for rank in ranks:
+                image_path = self.resource_path(f"images/{rank}_of_{suit}.png")
+                image = Image.open(image_path)
+                image = image.resize((self.card_width, self.card_height), Image.LANCZOS)
+                card_images[(suit, rank)] = ImageTk.PhotoImage(image)
+
+        return card_images
 
     def create_clear_button(self):
         self.clear_button = ttk.Button(
@@ -254,20 +281,6 @@ class PatienceGame:
         self.status_var.set("Game restarted. Click 'Deal Cards' to begin.")
         self.hint_button.config(state=tk.DISABLED)
         self.redeal_button.config(state=tk.DISABLED)  # Disable redeal button
-
-    def load_card_images(self):
-        suits = ["hearts", "diamonds", "clubs", "spades"]
-        ranks = list(range(1, 14))
-        card_images = {}
-
-        for suit in suits:
-            for rank in ranks:
-                image_path = f"images/{rank}_of_{suit}.png"
-                image = Image.open(image_path)
-                image = image.resize((self.card_width, self.card_height), Image.LANCZOS)
-                card_images[(suit, rank)] = ImageTk.PhotoImage(image)
-
-        return card_images
 
     def create_deck(self):
         suits = ["hearts", "diamonds", "clubs", "spades"]
