@@ -10,6 +10,7 @@ Welcome to the Patience Card Game! This is a classic card game implemented in Py
   - [Usage](#usage)
   - [Contributing](#contributing)
     - [Guidelines](#guidelines)
+  - [Known Issues](#known-issues)
   - [License](#license)
 
 ## Installation
@@ -96,6 +97,12 @@ We welcome contributions to improve the Patience Card Game! If you would like to
 - Write clear and concise commit messages.
 - Include documentation and comments where necessary.
 - Test your changes thoroughly before submitting a pull request.
+
+## Known Issues
+
+On MacOS, Tkinter can be a slower, resulting in jerkier movements.
+I am aware of this [issue](https://github.com/python/cpython/issues/87677) and there is little I can do to solve it.
+This maybe local to MacOS 14 (Sonoma), or MacOS in general.
 
 ## License
 
