@@ -37,6 +37,8 @@ class PatienceGame:
         self.card_items = {}
         self.drag_data = {"x": 0, "y": 0, "item": None}
 
+        self.initial_deck = None
+
         self.status_var.set("Welcome to Patience! Click 'Deal Cards' to begin.")
 
         self.highlight_rectangles = []
@@ -68,9 +70,16 @@ class PatienceGame:
         self.end_houses = [[] for _ in range(4)]
         self.card_items.clear()
         self.game_canvas.delete("card")
-        self.status_var.set("Board cleared. Click 'Deal Cards' to start a new game.")
+        self.status_var.set(
+            "Board cleared. Click 'Deal Cards' to start a new game or 'Redeal' to use the previous configuration."
+        )
         self.deal_button.config(state=tk.NORMAL)
         self.hint_button.config(state=tk.DISABLED)
+        # Only disable redeal if there's no initial deck
+        if self.initial_deck is None:
+            self.redeal_button.config(state=tk.DISABLED)
+        else:
+            self.redeal_button.config(state=tk.NORMAL)
         self.clear_highlights()
 
     def create_zoom_buttons(self):
@@ -176,7 +185,9 @@ class PatienceGame:
 
     def new_game(self):
         self.clear_board()
+        self.initial_deck = None
         self.status_var.set("New game started. Click 'Deal Cards' to begin.")
+        self.redeal_button.config(state=tk.DISABLED)  # Disable redeal button
 
     def create_control_buttons(self):
         control_frame = ttk.Frame(self.master)
@@ -186,6 +197,12 @@ class PatienceGame:
             control_frame, text="Deal Cards", command=self.animated_deal
         )
         self.deal_button.pack(side=tk.LEFT, padx=5)
+
+        self.redeal_button = ttk.Button(
+            control_frame, text="Redeal", command=self.redeal_cards
+        )
+        self.redeal_button.pack(side=tk.LEFT, padx=5)
+        self.redeal_button.config(state=tk.DISABLED)  # Initially disabled
 
         self.hint_button = ttk.Button(
             control_frame, text="Hint", command=self.show_hint
@@ -217,8 +234,10 @@ class PatienceGame:
 
     def restart_game(self):
         self.new_game()
+        self.initial_deck = None
         self.status_var.set("Game restarted. Click 'Deal Cards' to begin.")
         self.hint_button.config(state=tk.DISABLED)
+        self.redeal_button.config(state=tk.DISABLED)  # Disable redeal button
 
     def load_card_images(self):
         suits = ["hearts", "diamonds", "clubs", "spades"]
@@ -257,9 +276,12 @@ class PatienceGame:
         self.status_var.set("Dealing cards...")
 
         # Clear existing cards
-        self.houses = [[] for _ in range(10)]  # Change back to 10 houses
+        self.houses = [[] for _ in range(10)]
         self.end_houses = [[] for _ in range(4)]
         self.deck = self.create_deck()
+
+        # Always save the initial deck configuration
+        self.initial_deck = self.deck.copy()
 
         # Adjust house_card_counts for 10 houses
         house_card_counts = [8, 8, 8, 7, 6, 5, 4, 3, 2, 1]
@@ -278,10 +300,39 @@ class PatienceGame:
         self.status_var.set("Cards dealt. Good luck!")
         self.deal_button.config(state=tk.DISABLED)
         self.hint_button.config(state=tk.NORMAL)
+        self.redeal_button.config(state=tk.NORMAL)  # Enable redeal button
 
-        self.status_var.set("Cards dealt. Good luck!")
+    def redeal_cards(self):
+        if self.initial_deck is None:
+            self.status_var.set("No previous deal available. Start a new game first.")
+            return
+
+        self.deal_button.config(state=tk.DISABLED)
+        self.status_var.set("Redealing cards...")
+
+        # Clear existing cards
+        self.houses = [[] for _ in range(10)]
+        self.end_houses = [[] for _ in range(4)]
+        self.deck = self.initial_deck.copy()
+
+        # Adjust house_card_counts for 10 houses
+        house_card_counts = [8, 8, 8, 7, 6, 5, 4, 3, 2, 1]
+
+        # Deal cards from left to right for the first iteration
+        for i in range(10):
+            for _ in range(house_card_counts[i]):
+                if self.deck:
+                    self.houses[i].append(self.deck.pop())
+                    self.display_cards()
+                    self.master.update()
+                    time.sleep(0.1)
+                else:
+                    break
+
+        self.status_var.set("Cards redealt. Good luck!")
         self.deal_button.config(state=tk.DISABLED)
         self.hint_button.config(state=tk.NORMAL)
+        self.redeal_button.config(state=tk.NORMAL)  # Keep redeal button enabled
 
     def display_cards(self):
         self.game_canvas.delete("card")
