@@ -10,7 +10,7 @@ class Updater:
         self.current_version = current_version
         self.master = master
         self.github_api_url = (
-            "https://api.github.com/repos/your_username/your_repo_name/releases/latest"
+            "https://api.github.com/repos/depleur/patience/releases/latest"
         )
         self.update_thread = None
         self.stop_thread = False
