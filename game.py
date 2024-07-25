@@ -7,6 +7,7 @@ from math import sin, pi
 from rules import RulesManager
 import os
 import sys
+import pygame
 
 
 class Card:
@@ -22,6 +23,10 @@ class PatienceGame:
     def __init__(self, master):
         self.master = master
         self.master.title("Patience Card Game")
+        pygame.mixer.init()
+
+        sound_path = self.resource_path("sounds/card_deal.mp3")
+        self.deal_sound = pygame.mixer.Sound(sound_path)
 
         self.rules_manager = RulesManager(self.master)
 
@@ -197,6 +202,7 @@ class PatienceGame:
         game_menu.add_command(label="Quit", command=self.on_closing)
 
     def on_closing(self):
+        pygame.mixer.stop()  # Stop any playing sounds
         self.rules_manager.save_preferences()
         self.master.destroy()
 
@@ -335,12 +341,14 @@ class PatienceGame:
 
         def deal_card(house_index, card_count):
             if self.interrupt_flag:
+                pygame.mixer.stop()  # Stop the sound if interrupted
                 return
 
             if card_count > 0 and self.deck:
                 self.houses[house_index].append(self.deck.pop())
                 self.display_cards()
                 self.master.update()
+                self.deal_sound.play()
                 self.master.after_id = self.master.after(
                     100, deal_card, house_index, card_count - 1
                 )
@@ -349,6 +357,7 @@ class PatienceGame:
                     100, deal_card, house_index + 1, house_card_counts[house_index + 1]
                 )
             else:
+                pygame.mixer.stop()  # Stop the sound when dealing is finished
                 self.finish_deal()
 
         deal_card(0, house_card_counts[0])
@@ -376,12 +385,14 @@ class PatienceGame:
 
         def redeal_card(house_index, card_count):
             if self.interrupt_flag:
+                pygame.mixer.stop()  # Stop the sound if interrupted
                 return
 
             if card_count > 0 and self.deck:
                 self.houses[house_index].append(self.deck.pop())
                 self.display_cards()
                 self.master.update()
+                self.deal_sound.play()
                 self.master.after_id = self.master.after(
                     100, redeal_card, house_index, card_count - 1
                 )
@@ -393,6 +404,7 @@ class PatienceGame:
                     house_card_counts[house_index + 1],
                 )
             else:
+                pygame.mixer.stop()  # Stop the sound when dealing is finished
                 self.finish_redeal()
 
         redeal_card(0, house_card_counts[0])

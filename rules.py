@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import json
+import os
 
 
 class RulesManager:
@@ -9,6 +10,9 @@ class RulesManager:
         self.show_rules_on_startup = tk.BooleanVar(value=True)
         self.zoom_factor = tk.DoubleVar(value=1.0)
         self.is_fullscreen = tk.BooleanVar(value=False)
+        self.preferences_file = os.path.join(
+            os.path.expanduser("~"), ".patience_preferences.json"
+        )
         self.load_preferences()
 
     def show_rules(self):
@@ -85,7 +89,7 @@ Good luck and enjoy the game!"""
 
     def load_preferences(self):
         try:
-            with open("patience_preferences.json", "r") as f:
+            with open(self.preferences_file, "r") as f:
                 prefs = json.load(f)
                 self.show_rules_on_startup.set(prefs.get("show_rules_on_startup", True))
                 self.zoom_factor.set(prefs.get("zoom_factor", 1.0))
@@ -99,7 +103,7 @@ Good luck and enjoy the game!"""
             "zoom_factor": self.zoom_factor.get(),
             "is_fullscreen": self.is_fullscreen.get(),
         }
-        with open("patience_preferences.json", "w") as f:
+        with open(self.preferences_file, "w") as f:
             json.dump(prefs, f)
 
     def get_zoom_factor(self):
