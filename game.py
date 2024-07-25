@@ -607,16 +607,22 @@ class PatienceGame:
             self.drag_data["y"] = event.y
 
     def check_win(self):
-        for house in self.end_houses:
-            if len(house) != 13:
-                return False
-            if house[0].rank != 1 or house[-1].rank != 13:
-                return False
-            if not all(house[i].rank == house[i - 1].rank + 1 for i in range(1, 13)):
-                return False
-            if not all(house[i].color != house[i - 1].color for i in range(1, 13)):
-                return False
-        return True
+        valid_house_count = 0
+
+        for house in self.houses:
+            if len(house) == 13:  # Check if the house is full
+                # Check if the house starts with King and ends with Ace
+                if house[0].rank == 13 and house[-1].rank == 1:
+                    # Check if the cards are in descending order
+                    if all(
+                        house[i].rank == house[i - 1].rank - 1 for i in range(1, 13)
+                    ):
+                        valid_house_count += 1
+
+            if valid_house_count == 4:
+                return True
+
+        return False
 
     def get_card_item(self, card):
         for item, c in self.card_items.items():
