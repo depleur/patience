@@ -117,7 +117,7 @@ class PatienceGame:
 
         self.status_var.set("Board cleared. Click 'Deal Cards' to start a new game.")
         self.deal_button.config(state=tk.NORMAL)
-        self.hint_button.config(state=tk.DISABLED)
+        # self.hint_button.config(state=tk.DISABLED)
         self.undo_button.config(state=tk.DISABLED)
         if self.initial_deck is None:
             self.redeal_button.config(state=tk.DISABLED)
@@ -263,10 +263,10 @@ class PatienceGame:
         self.redeal_button.pack(side=tk.LEFT, padx=5)
         self.redeal_button.config(state=tk.DISABLED)  # Initially disabled
 
-        self.hint_button = ttk.Button(
-            control_frame, text="Hint", command=self.show_hint
-        )
-        self.hint_button.pack(side=tk.LEFT, padx=5)
+        # self.hint_button = ttk.Button(
+        #     control_frame, text="Hint", command=self.show_hint
+        # )
+        # self.hint_button.pack(side=tk.LEFT, padx=5)
 
         self.undo_button = ttk.Button(
             control_frame, text="Undo", command=self.undo_move, state=tk.DISABLED
@@ -300,7 +300,7 @@ class PatienceGame:
         self.new_game()
         self.initial_deck = None
         self.status_var.set("Game restarted. Click 'Deal Cards' to begin.")
-        self.hint_button.config(state=tk.DISABLED)
+        # self.hint_button.config(state=tk.DISABLED)
         self.redeal_button.config(state=tk.DISABLED)  # Disable redeal button
 
     def create_deck(self):
@@ -356,7 +356,7 @@ class PatienceGame:
     def finish_deal(self):
         self.status_var.set("Cards dealt. Good luck!")
         self.deal_button.config(state=tk.DISABLED)
-        self.hint_button.config(state=tk.NORMAL)
+        # self.hint_button.config(state=tk.NORMAL)
         self.redeal_button.config(state=tk.NORMAL)
         self.undo_button.config(state=tk.NORMAL)
 
@@ -406,7 +406,7 @@ class PatienceGame:
     def finish_redeal(self):
         self.status_var.set("Cards redealt. Good luck!")
         self.deal_button.config(state=tk.DISABLED)
-        self.hint_button.config(state=tk.NORMAL)
+        # self.hint_button.config(state=tk.NORMAL)
         self.redeal_button.config(state=tk.NORMAL)
         self.undo_button.config(state=tk.NORMAL)
 
@@ -650,39 +650,39 @@ class PatienceGame:
                 return True
         return False
 
-    def create_hint_button(self):
-        self.hint_button = tk.Button(self.master, text="Hint", command=self.show_hint)
-        self.hint_button.pack(side=tk.BOTTOM, pady=10)
+    # def create_hint_button(self):
+    #     self.hint_button = tk.Button(self.master, text="Hint", command=self.show_hint)
+    #     self.hint_button.pack(side=tk.BOTTOM, pady=10)
 
     # FIXME: Better hints.
 
-    def show_hint(self):
-        self.clear_highlights()
-        hint_found = False
+    # def show_hint(self):
+    #     self.clear_highlights()
+    #     hint_found = False
 
-        for i, source_house in enumerate(self.houses):
-            if not source_house:
-                continue
-            for j, target_house in enumerate(self.houses):
-                if i != j and self.is_valid_move([source_house[-1]], target_house):
-                    self.highlight_card(source_house[-1])
-                    hint_found = True
-                    break
-            if hint_found:
-                break
+    #     for i, source_house in enumerate(self.houses):
+    #         if not source_house:
+    #             continue
+    #         for j, target_house in enumerate(self.houses):
+    #             if i != j and self.is_valid_move([source_house[-1]], target_house):
+    #                 self.highlight_card(source_house[-1])
+    #                 hint_found = True
+    #                 break
+    #         if hint_found:
+    #             break
 
-        # Check for moves to end houses
-        if not hint_found:
-            for house in self.houses:
-                if house and self.can_move_to_end_house(house[-1]):
-                    self.highlight_card(house[-1])
-                    hint_found = True
-                    break
+    #     # Check for moves to end houses
+    #     if not hint_found:
+    #         for house in self.houses:
+    #             if house and self.can_move_to_end_house(house[-1]):
+    #                 self.highlight_card(house[-1])
+    #                 hint_found = True
+    #                 break
 
-        if not hint_found:
-            self.status_var.set(
-                "No hints available. Try moving cards to reveal new options."
-            )
+    #     if not hint_found:
+    #         self.status_var.set(
+    #             "No hints available. Try moving cards to reveal new options."
+    #         )
 
     # FIXME: Make better card highlighting. Try highlighting the card entirely instead of just the border.
 
