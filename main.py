@@ -1,4 +1,4 @@
-from game import PatienceGame
+from game import PatienceGame, CURRENT_VERSION
 import tkinter as tk
 
 if __name__ == "__main__":

@@ -8,6 +8,9 @@ from rules import RulesManager
 import os
 import sys
 import pygame
+from updater import Updater
+
+CURRENT_VERSION = "v1.0.4-alpha"
 
 
 class Card:
@@ -21,6 +24,9 @@ class Card:
 
 class PatienceGame:
     def __init__(self, master):
+        self.updater = Updater(CURRENT_VERSION, self.master)
+        self.updater.start_update_check_thread()
+
         self.master = master
         self.master.title("Patience Card Game")
         pygame.mixer.init()
@@ -132,6 +138,16 @@ class PatienceGame:
 
         self.interrupt_flag = False
 
+    def create_update_check_button(self):
+        self.update_check_button = ttk.Button(
+            self.master, text="Check for Updates", command=self.manual_update_check
+        )
+        self.update_check_button.pack(side=tk.BOTTOM, pady=5)
+
+    def manual_update_check(self):
+        if not self.updater.check_for_updates():
+            messagebox.showinfo("No Updates", "You are running the latest version.")
+
     def create_zoom_buttons(self):
         zoom_frame = ttk.Frame(self.master)
         zoom_frame.pack(side=tk.BOTTOM, pady=5)
@@ -174,6 +190,7 @@ class PatienceGame:
     def on_closing(self):
         self.rules_manager.save_preferences()
         self.master.destroy()
+        self.updater.stop_update_check_thread()
 
     def resize_cards(self):
         self.card_width = int(80 * self.zoom_factor)
@@ -301,6 +318,8 @@ class PatienceGame:
             control_frame, text="Fullscreen", command=self.toggle_fullscreen
         )
         self.fullscreen_button.pack(side=tk.LEFT, padx=5)
+
+        self.create_update_check_button()
 
     def restart_game(self):
         self.new_game()
