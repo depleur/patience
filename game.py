@@ -53,6 +53,7 @@ class PatienceGame:
 
         self.master.after(100, self.rules_manager.show_rules)
 
+        self.master.bind("<Escape>", self.handle_escape)
         self.master.bind("<F11>", lambda event: self.toggle_fullscreen())
 
         self.rules_manager = RulesManager(self.master)
@@ -62,6 +63,9 @@ class PatienceGame:
         # Apply fullscreen preference
         if self.rules_manager.get_is_fullscreen():
             self.master.attributes("-fullscreen", True)
+
+        if not self.rules_manager.get_is_fullscreen():
+            self.master.overrideredirect(False)
 
     @staticmethod
     def resource_path(relative_path):
@@ -138,6 +142,10 @@ class PatienceGame:
         self.card_images = self.load_card_images()
         self.create_house_areas()
         self.display_cards()
+
+        # Ensure window decorations are shown when not in fullscreen
+        if not self.master.attributes("-fullscreen"):
+            self.master.overrideredirect(False)
 
     def zoom_in(self):
         if self.zoom_factor < 2.0:  # Limit max zoom
@@ -712,10 +720,16 @@ class PatienceGame:
 
     def toggle_fullscreen(self):
         is_fullscreen = self.master.attributes("-fullscreen")
-        self.master.attributes("-fullscreen", not is_fullscreen)
+        if is_fullscreen:
+            self.master.attributes("-fullscreen", False)
+            self.master.overrideredirect(
+                False
+            )  # This brings back the window decorations
+        else:
+            self.master.attributes("-fullscreen", True)
         self.rules_manager.set_is_fullscreen(not is_fullscreen)
         if not is_fullscreen:
-            self.status_var.set("Fullscreen mode enabled. Press F11 to exit.")
+            self.status_var.set("Fullscreen mode enabled. Press F11 or ESC to exit.")
         else:
             self.status_var.set("Fullscreen mode disabled.")
 
