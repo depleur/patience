@@ -11,7 +11,7 @@ import pygame
 from updater import Updater
 from tkinter import messagebox
 
-CURRENT_VERSION = "v1.0.10-alpha"
+CURRENT_VERSION = "v1.0.11-alpha"
 
 
 class Card:
