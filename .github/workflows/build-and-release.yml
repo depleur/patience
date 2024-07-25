@@ -39,7 +39,7 @@ jobs:
       - name: Build with PyInstaller
         run: |
           python -c "import sys; print(sys.executable)"
-          python -m PyInstaller --onefile --windowed --add-data "images:images" "sounds:sounds" --name patience main.py
+          python -m PyInstaller --onefile --windowed --add-data "images:images" --add-data "sounds:sounds" --name patience main.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
