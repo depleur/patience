@@ -11,7 +11,7 @@ import pygame
 from updater import Updater
 from tkinter import messagebox
 
-CURRENT_VERSION = "v1.0.11-alpha"
+CURRENT_VERSION = "v1.0.12-alpha"
 
 
 class Card:
@@ -27,13 +27,13 @@ class PatienceGame:
     def __init__(self, master):
         self.master = master
         self.master.title("Patience Card Game")
-        pygame.mixer.init()
 
         self.updater = Updater(CURRENT_VERSION, self.master)
         self.updater.start_update_check_thread()
 
         sound_path = self.resource_path("sounds/card_deal.mp3")
         self.deal_sound = pygame.mixer.Sound(sound_path)
+        pygame.mixer.init()
 
         self.rules_manager = RulesManager(self.master)
 
