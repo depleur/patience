@@ -50,9 +50,9 @@ Rules of the game:
 2. Cards are dealt into 13 columns (houses).
 3. The goal is to build up four foundation piles, one for each suit, from Ace to King.
 4. In the columns, cards must be placed in descending order and alternating colors.
-5. Only Kings can be placed on empty columns.
-6. You can move single cards or stacks of correctly sequenced cards between columns.
-7. The game is won when all cards are moved to the foundation piles.
+5. You can move single cards or stacks of correctly sequenced cards between columns.
+6. The game is won when all cards are moved to the foundation piles.
+7. Redeal the cards, or undo the moves (upto 5) if you get stuck.
 
 Good luck and enjoy the game!"""
 

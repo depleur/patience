@@ -33,6 +33,7 @@ class PatienceGame:
         self.create_game_area()
         self.create_status_bar()
         self.move_history = []
+        self.move_count = 0
 
         self.card_images = self.load_card_images()
         self.houses = [[] for _ in range(10)]
@@ -91,6 +92,10 @@ class PatienceGame:
                 card_images[(suit, rank)] = ImageTk.PhotoImage(image)
 
         return card_images
+
+    def update_move_count(self):
+        self.move_count += 1
+        self.move_counter_label.config(text=f"Moves: {self.move_count}")
 
     def create_clear_button(self):
         self.clear_button = ttk.Button(
@@ -220,12 +225,18 @@ class PatienceGame:
             )
 
     def create_status_bar(self):
+        status_frame = ttk.Frame(self.master)
+        status_frame.pack(side=tk.BOTTOM, fill=tk.X)
+
         self.status_var = tk.StringVar()
         self.status_var.set("Welcome to Patience!")
         status_bar = ttk.Label(
-            self.master, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W
+            status_frame, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W
         )
-        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        status_bar.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        self.move_counter_label = ttk.Label(status_frame, text="Moves: 0", anchor=tk.E)
+        self.move_counter_label.pack(side=tk.RIGHT, padx=5)
 
     def new_game(self):
         self.clear_board()
@@ -234,6 +245,8 @@ class PatienceGame:
         self.redeal_button.config(state=tk.DISABLED)  # Disable redeal button
         self.move_history.clear()
         self.undo_button.config(state=tk.DISABLED)
+        self.move_count = 0
+        self.move_counter_label.config(text="Moves: 0")
 
     def create_control_buttons(self):
         control_frame = ttk.Frame(self.master)
@@ -383,6 +396,12 @@ class PatienceGame:
                 self.finish_redeal()
 
         redeal_card(0, house_card_counts[0])
+        self.move_count = 0
+        self.move_counter_label.config(text="Moves: 0")
+
+    def handle_escape(self, event):
+        if self.master.attributes("-fullscreen"):
+            self.toggle_fullscreen()
 
     def finish_redeal(self):
         self.status_var.set("Cards redealt. Good luck!")
@@ -485,8 +504,9 @@ class PatienceGame:
             dragged_cards, target_house
         ):
             self.move_card(dragged_cards, source_house, target_house)
+            self.update_move_count()  # Add this line
 
-        self.display_cards()  # Redraw all cards
+        self.display_cards()
 
         if self.check_win():
             self.status_var.set("Congratulations! You've won the game!")
@@ -741,6 +761,11 @@ class PatienceGame:
         self.houses = self.move_history.pop()
         self.display_cards()
         self.status_var.set("Move undone.")
+
+        self.move_count = max(
+            0, self.move_count - 1
+        )  # Ensure move count doesn't go below 0
+        self.move_counter_label.config(text=f"Moves: {self.move_count}")
 
         if not self.move_history:
             self.undo_button.config(state=tk.DISABLED)
