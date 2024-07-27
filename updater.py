@@ -31,8 +31,8 @@ class Updater:
             return False
 
     def is_newer_version(self, latest_version):
-        current = [int(x) for x in self.current_version[1:].split(".")]
-        latest = [int(x) for x in latest_version[1:].split(".")]
+        current = [x for x in self.current_version[1:].split(".")]
+        latest = [x for x in latest_version[1:].split(".")]
         return latest > current
 
     def notify_update_available(self, new_version, download_url):

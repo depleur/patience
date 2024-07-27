@@ -10,8 +10,9 @@ import sys
 import pygame
 from updater import Updater
 from tkinter import messagebox
+from win_celebration import create_win_celebration
 
-CURRENT_VERSION = "v1.0.15-alpha"
+CURRENT_VERSION = "v1.0.16-alpha"
 
 
 class Card:
@@ -72,6 +73,8 @@ class PatienceGame:
         self.rules_manager = RulesManager(self.master)
         self.zoom_factor = self.rules_manager.get_zoom_factor()
         self.apply_zoom()
+
+        self.win_celebration = create_win_celebration(self)
 
         # Apply fullscreen preference
         if self.rules_manager.get_is_fullscreen():
@@ -527,16 +530,14 @@ class PatienceGame:
         dragged_cards = self.drag_data["cards"]
         x, y = self.game_canvas.coords(dragged_item)
 
-        target_house_index = min(9, max(0, int((x - 60) / (self.card_width + 20))))
-        target_house = self.houses[target_house_index]
-
         source_house = self.drag_data["source_house"]
+        target_house, target_house_index = self.find_nearest_house(x, y)
 
         if source_house != target_house and self.is_valid_move(
             dragged_cards, target_house
         ):
             self.move_card(dragged_cards, source_house, target_house)
-            self.update_move_count()  # Add this line
+            self.update_move_count()
 
         self.display_cards()
 
@@ -546,6 +547,23 @@ class PatienceGame:
         elif self.is_game_over():
             self.status_var.set("Game over. No more moves possible. Try again!")
             self.deal_button.config(state=tk.NORMAL)
+
+    def find_nearest_house(self, x, y):
+        min_distance = float("inf")
+        nearest_house = None
+        nearest_index = -1
+
+        for i, house in enumerate(self.houses):
+            house_x = 60 + i * (self.card_width + 20)
+            house_y = 20
+            distance = ((x - house_x) ** 2 + (y - house_y) ** 2) ** 0.5
+
+            if distance < min_distance:
+                min_distance = distance
+                nearest_house = house
+                nearest_index = i
+
+        return nearest_house, nearest_index
 
     def on_card_release(self, event):
         if self.drag_data["item"] and self.drag_data["cards"]:
@@ -651,8 +669,9 @@ class PatienceGame:
                     ):
                         valid_house_count += 1
 
-            if valid_house_count == 4:
-                return True
+        if valid_house_count == 4:
+            self.win_celebration.show_celebration(self.move_count)
+            return True
 
         return False
 
