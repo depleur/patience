@@ -38,13 +38,14 @@ jobs:
 
       - name: Build with PyInstaller
         run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            pyinstaller --onefile --windowed --add-data "images:images" --add-data "sounds:sounds" --icon=images/icon.ico --name patience main.py
-          elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            pyinstaller --onefile --windowed --add-data "images;images" --add-data "sounds;sounds" --icon=images/icon.ico --name patience main.py
+          elif [ "${{ runner.os }}" == "macOS" ]; then
             pyinstaller --onefile --windowed --add-data "images:images" --add-data "sounds:sounds" --icon=images/icon.icns --name patience main.py
           else
             pyinstaller --onefile --windowed --add-data "images:images" --add-data "sounds:sounds" --name patience main.py
           fi
+        shell: bash
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
