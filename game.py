@@ -130,9 +130,12 @@ class PatienceGame:
         self.game_canvas.delete("card")
         self.move_history.clear()
 
+        # Reset move count and update the label
+        self.move_count = 0
+        self.move_counter_label.config(text="Moves: 0")
+
         self.status_var.set("Board cleared. Click 'Deal Cards' to start a new game.")
         self.deal_button.config(state=tk.NORMAL)
-        # self.hint_button.config(state=tk.DISABLED)
         self.undo_button.config(state=tk.DISABLED)
         if self.initial_deck is None:
             self.redeal_button.config(state=tk.DISABLED)
@@ -397,6 +400,10 @@ class PatienceGame:
             self.status_var.set("No previous deal available. Start a new game first.")
             return
 
+        # Reset move count at the beginning of redeal
+        self.move_count = 0
+        self.move_counter_label.config(text="Moves: 0")
+
         self.deal_button.config(state=tk.DISABLED)
         self.status_var.set("Redealing cards...")
 
@@ -431,8 +438,6 @@ class PatienceGame:
                 self.finish_redeal()
 
         redeal_card(0, house_card_counts[0])
-        self.move_count = 0
-        self.move_counter_label.config(text="Moves: 0")
 
     def handle_escape(self, event):
         if self.master.attributes("-fullscreen"):
@@ -713,87 +718,87 @@ class PatienceGame:
 
     # FIXME: Better hints.
 
-    # def show_hint(self):
-    #     self.clear_highlights()
-    #     hint_found = False
+    def show_hint(self):
+        self.clear_highlights()
+        hint_found = False
 
-    #     for i, source_house in enumerate(self.houses):
-    #         if not source_house:
-    #             continue
-    #         for j, target_house in enumerate(self.houses):
-    #             if i != j and self.is_valid_move([source_house[-1]], target_house):
-    #                 self.highlight_card(source_house[-1])
-    #                 hint_found = True
-    #                 break
-    #         if hint_found:
-    #             break
+        for i, source_house in enumerate(self.houses):
+            if not source_house:
+                continue
+            for j, target_house in enumerate(self.houses):
+                if i != j and self.is_valid_move([source_house[-1]], target_house):
+                    self.highlight_card(source_house[-1])
+                    hint_found = True
+                    break
+            if hint_found:
+                break
 
-    #     # Check for moves to end houses
-    #     if not hint_found:
-    #         for house in self.houses:
-    #             if house and self.can_move_to_end_house(house[-1]):
-    #                 self.highlight_card(house[-1])
-    #                 hint_found = True
-    #                 break
+        # Check for moves to end houses
+        if not hint_found:
+            for house in self.houses:
+                if house and self.can_move_to_end_house(house[-1]):
+                    self.highlight_card(house[-1])
+                    hint_found = True
+                    break
 
-    #     if not hint_found:
-    #         self.status_var.set(
-    #             "No hints available. Try moving cards to reveal new options."
-    #         )
+        if not hint_found:
+            self.status_var.set(
+                "No hints available. Try moving cards to reveal new options."
+            )
 
     # FIXME: Make better card highlighting. Try highlighting the card entirely instead of just the border.
 
-    def highlight_card(self, card):
-        self.clear_highlights()  # Clear existing highlights
-        item = self.get_card_item(card)
-        x, y = self.game_canvas.coords(item)
+    # def highlight_card(self, card):
+    #     self.clear_highlights()  # Clear existing highlights
+    #     item = self.get_card_item(card)
+    #     x, y = self.game_canvas.coords(item)
 
-        # Create a semi-transparent rectangle over the entire card
-        highlight = self.game_canvas.create_rectangle(
-            x,
-            y,
-            x + self.card_width,
-            y + self.card_height,
-            fill="yellow",
-            stipple="gray50",
-            outline="",
-            tags="highlight",
-        )
+    #     # Create a semi-transparent rectangle over the entire card
+    #     highlight = self.game_canvas.create_rectangle(
+    #         x,
+    #         y,
+    #         x + self.card_width,
+    #         y + self.card_height,
+    #         fill="yellow",
+    #         stipple="gray50",
+    #         outline="",
+    #         tags="highlight",
+    #     )
 
-        self.highlight_rectangles.append(highlight)
-        self.game_canvas.tag_raise(highlight)
-        self.game_canvas.tag_raise(item)
+    #     self.highlight_rectangles.append(highlight)
+    #     self.game_canvas.tag_raise(highlight)
+    #     self.game_canvas.tag_raise(item)
 
-        # Start the strobing effect
-        self.strobe_highlight(highlight, 5)  # 5 seconds of strobing
+    #     # Start the strobing effect
+    #     self.strobe_highlight(highlight, 5)  # 5 seconds of strobing
 
-    def strobe_highlight(self, highlight, duration):
-        start_time = time.time()
+    # def strobe_highlight(self, highlight, duration):
+    #     start_time = time.time()
 
-        def update_opacity():
-            elapsed = time.time() - start_time
-            if elapsed < duration:
-                # Calculate opacity using a sine wave for smooth pulsing
-                opacity = int(sin(elapsed * pi) * 63 + 64)  # Reduced opacity range
-                color = f"#{opacity:02x}ffff"  # Yellow with varying opacity
-                self.game_canvas.itemconfig(highlight, fill=color)
-                self.strobe_after_id = self.master.after(
-                    50, update_opacity
-                )  # Update every 50ms
-            else:
-                self.game_canvas.delete(highlight)
-                self.highlight_rectangles.remove(highlight)
-                self.strobe_after_id = None
+    #     def update_opacity():
+    #         elapsed = time.time() - start_time
+    #         if elapsed < duration:
+    #             # Calculate opacity using a sine wave for smooth pulsing
+    #             opacity = int(sin(elapsed * pi) * 63 + 64)  # Reduced opacity range
+    #             color = f"#{opacity:02x}ffff"  # Yellow with varying opacity
+    #             self.game_canvas.itemconfig(highlight, fill=color)
+    #             self.strobe_after_id = self.master.after(
+    #                 50, update_opacity
+    #             )  # Update every 50ms
+    #         else:
+    #             self.game_canvas.delete(highlight)
+    #             self.highlight_rectangles.remove(highlight)
+    #             self.strobe_after_id = None
 
-        update_opacity()
+    #     update_opacity()
 
-    def clear_highlights(self):
-        for rect in self.highlight_rectangles:
-            self.game_canvas.delete(rect)
-        self.highlight_rectangles.clear()
-        if self.strobe_after_id is not None:
-            self.master.after_cancel(self.strobe_after_id)
-            self.strobe_after_id = None
+    # def clear_highlights(self):
+    #     for rect in self.highlight_rectangles:
+    #         self.game_canvas.delete(rect)
+    #     self.highlight_rectangles.clear()
+    #     if self.strobe_after_id is not None:
+    #         self.master.after_cancel(self.strobe_after_id)
+    #         self.strobe_after_id = None
 
     def toggle_fullscreen(self):
         is_fullscreen = self.master.attributes("-fullscreen")

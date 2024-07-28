@@ -45,7 +45,9 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: patience-${{ matrix.os }}
-          path: dist/*
+          path: |
+            dist/*
+            !dist/*.spec
 
   release:
     needs: build
@@ -56,13 +58,19 @@ jobs:
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Prepare release files
+        run: |
+          mkdir release_files
+          cp artifacts/patience-ubuntu-latest/patience release_files/patience-linux
+          cp artifacts/patience-windows-latest/patience.exe release_files/patience-windows.exe
+          cp artifacts/patience-macos-latest/patience release_files/patience-macos
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            patience-ubuntu-latest/*
-            patience-windows-latest/*
-            patience-macos-latest/*
+          files: release_files/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
