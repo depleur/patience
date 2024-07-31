@@ -12,7 +12,7 @@ from updater import Updater
 from tkinter import messagebox
 from win_celebration import create_win_celebration
 
-CURRENT_VERSION = "v1.0.21-alpha"
+CURRENT_VERSION = "v1.0.22-alpha"
 
 
 class Card:
