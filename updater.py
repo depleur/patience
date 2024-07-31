@@ -1,5 +1,4 @@
 import requests
-import tkinter as tk
 from tkinter import messagebox
 import threading
 import time

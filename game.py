@@ -194,11 +194,6 @@ class PatienceGame:
             self.resize_cards()
             self.display_cards()
 
-    def on_closing(self):
-        self.rules_manager.save_preferences()
-        self.master.destroy()
-        self.updater.stop_update_check_thread()
-
     def resize_cards(self):
         self.card_width = int(80 * self.zoom_factor)
         self.card_height = int(120 * self.zoom_factor)
@@ -650,16 +645,6 @@ class PatienceGame:
         # If the target house is not empty, update the cards_above of the previous top card
         if len(to_house) > len(cards):
             to_house[-len(cards) - 1].cards_above = [cards[0]]
-
-    def on_card_motion(self, event):
-        if self.drag_data["item"]:
-            dx = event.x - self.drag_data["x"]
-            dy = event.y - self.drag_data["y"]
-            for card in self.drag_data["cards"]:
-                item = self.get_card_item(card)
-                self.game_canvas.move(item, dx, dy)
-            self.drag_data["x"] = event.x
-            self.drag_data["y"] = event.y
 
     def check_win(self):
         valid_house_count = 0
