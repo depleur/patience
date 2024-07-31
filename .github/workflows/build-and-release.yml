@@ -72,7 +72,8 @@ jobs:
           mkdir release_files
           cp artifacts/patience-ubuntu-latest/patience release_files/patience-linux
           cp artifacts/patience-windows-latest/patience.exe release_files/patience.exe
-          cp artifacts/patience-macos-latest/patience.app release_files/patience.app
+          cp artifacts/patience-macos-latest/patience release_files/patience-macos
+          chmod +x release_files/patience-macos
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
