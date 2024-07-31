@@ -1,12 +1,14 @@
 # Patience Card Game
 
-Welcome to the Patience Card Game! This is a classic card game implemented in Python using the Tkinter library for the GUI and the PIL library for image handling. The game is similar to Solitaire, where the goal is to move all cards to the foundation piles following specific rules.
+Welcome to the Patience Card Game! This is a classic card game implemented in Python using the Tkinter library for the GUI and the PIL library for image handling. The game is similar to Solitaire, where the goal is to move all cards to 4 end houses to win.
 
 ## Table of Contents
 
 - [Patience Card Game](#patience-card-game)
   - [Table of Contents](#table-of-contents)
   - [Installation](#installation)
+    - [Option 1: Installing from Releases](#option-1-installing-from-releases)
+    - [Option 2: Installing from Source](#option-2-installing-from-source)
   - [Usage](#usage)
   - [Contributing](#contributing)
     - [Guidelines](#guidelines)
@@ -15,13 +17,34 @@ Welcome to the Patience Card Game! This is a classic card game implemented in Py
 
 ## Installation
 
-To get started with the Patience Card Game, follow these steps:
+You can install and run the Patience Card Game in two ways: from releases or from source.
+
+### Option 1: Installing from Releases
+
+1. Go to the [Releases](https://github.com/depleur/patience/releases) page of the repository.
+2. Download the latest release for your operating system:
+
+   - For Windows: Download the `.exe` file
+   - For macOS: Download the macOS executable
+   - For Linux: Download the Linux executable
+
+3. Running the game:
+   - Windows: Simply double-click the `.exe` file to run the game.
+   - macOS and Linux: Open a terminal, navigate to the directory containing the downloaded file, and run:
+     ```sh
+     chmod +x patience-macos && ./patience-macos
+     ```
+     This command makes the file executable and runs it. After the first time, you can double-click the file to run it.
+
+### Option 2: Installing from Source
+
+To install from source, follow these steps:
 
 1. **Clone the repository:**
 
    ```sh
    git clone https://github.com/depleur/patience.git
-   cd patience-card-game
+   cd patience
    ```
 
 2. **Set up a Python virtual environment:**
@@ -39,13 +62,11 @@ To get started with the Patience Card Game, follow these steps:
    pip install -r requirements.txt
    ```
 
-4. **Download card images:**
-
-   Make sure you have a folder named `images` in the project directory containing images for all cards. The images should be named in the format `rank_of_suit.png` (e.g., `1_of_hearts.png`, `13_of_spades.png`). This comes prepackaged when you clone the repo.
-
 ## Usage
 
-To run the game, execute the following command:
+If you installed from releases, run the game by following the instructions in the [Installing from Releases](#option-1-installing-from-releases) section.
+
+If you installed from source, run the game by executing the following command:
 
 ```sh
 python game.py
@@ -100,9 +121,9 @@ We welcome contributions to improve the Patience Card Game! If you would like to
 
 ## Known Issues
 
-On MacOS, Tkinter can be a slower, resulting in jerkier movements.
+On macOS, Tkinter can be slower, resulting in jerkier movements.
 I am aware of this [issue](https://github.com/python/cpython/issues/87677) and there is little I can do to solve it.
-This maybe local to MacOS 14 (Sonoma), or MacOS in general.
+This may be local to macOS 14 (Sonoma), or macOS in general.
 
 ## License
 
