@@ -12,6 +12,10 @@ from updater import Updater
 from tkinter import messagebox
 from win_celebration import create_win_celebration
 
+# from solver import Solver, GameState
+import signal
+import json
+
 CURRENT_VERSION = "v1.0.21-alpha"
 
 
@@ -47,6 +51,9 @@ class PatienceGame:
         self.create_status_bar()
         self.move_history = []
         self.move_count = 0
+
+        self.high_score = self.load_high_score()
+        self.create_high_score_label()
 
         self.card_images = self.load_card_images()
         self.houses = [[] for _ in range(10)]
@@ -107,6 +114,42 @@ class PatienceGame:
                 card_images[(suit, rank)] = ImageTk.PhotoImage(image)
 
         return card_images
+
+    def load_high_score(self):
+        try:
+            with open("patience_preferences.json", "r") as f:
+                preferences = json.load(f)
+                return preferences.get("high_score", 0)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return 0
+
+    def save_high_score(self):
+        try:
+            with open("patience_preferences.json", "r") as f:
+                preferences = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            preferences = {}
+
+        preferences["high_score"] = max(self.high_score, self.move_count)
+
+        with open("patience_preferences.json", "w") as f:
+            json.dump(preferences, f)
+
+    def create_high_score_label(self):
+        self.high_score_label = ttk.Label(
+            self.master, text=f"High Score: {self.high_score}"
+        )
+        self.high_score_label.pack(side=tk.TOP, pady=5)
+
+    def update_high_score(self):
+        if self.move_count < self.high_score or self.high_score == 0:
+            self.high_score = self.move_count
+            self.high_score_label.config(text=f"High Score: {self.high_score}")
+            self.save_high_score()
+
+    def quit_game(self):
+        self.save_high_score()
+        os.kill(os.getpid(), signal.SIGTERM)
 
     def update_move_count(self):
         self.move_count += 1
@@ -221,8 +264,9 @@ class PatienceGame:
         game_menu.add_command(label="Quit", command=self.on_closing)
 
     def on_closing(self):
-        pygame.mixer.stop()  # Stop any playing sounds
+        pygame.mixer.stop()
         self.rules_manager.save_preferences()
+        self.save_high_score()
         self.master.destroy()
 
     def create_game_area(self):
@@ -287,6 +331,11 @@ class PatienceGame:
         )
         self.redeal_button.pack(side=tk.LEFT, padx=5)
         self.redeal_button.config(state=tk.DISABLED)  # Initially disabled
+
+        self.quit_button = ttk.Button(
+            control_frame, text="Quit", command=self.quit_game
+        )
+        self.quit_button.pack(side=tk.LEFT, padx=5)
 
         # self.hint_button = ttk.Button(
         #     control_frame, text="Hint", command=self.show_hint
@@ -650,16 +699,15 @@ class PatienceGame:
         valid_house_count = 0
 
         for house in self.houses:
-            if len(house) == 13:  # Check if the house is full
-                # Check if the house starts with King and ends with Ace
+            if len(house) == 13:
                 if house[0].rank == 13 and house[-1].rank == 1:
-                    # Check if the cards are in descending order
                     if all(
                         house[i].rank == house[i - 1].rank - 1 for i in range(1, 13)
                     ):
                         valid_house_count += 1
 
         if valid_house_count == 4:
+            self.update_high_score()
             self.win_celebration.show_celebration(self.move_count)
             return True
 
@@ -703,33 +751,53 @@ class PatienceGame:
 
     # FIXME: Better hints.
 
-    def show_hint(self):
-        self.clear_highlights()
-        hint_found = False
+    # def check_game_winnable(self):
+    #     current_state = GameState(
+    #         [[Card(card.suit, card.rank) for card in house] for house in self.houses]
+    #     )
+    #     solver = Solver(current_state)
+    #     if not solver.is_game_winnable():
+    #         self.status_var.set("Warning: The game may no longer be winnable.")
 
-        for i, source_house in enumerate(self.houses):
-            if not source_house:
-                continue
-            for j, target_house in enumerate(self.houses):
-                if i != j and self.is_valid_move([source_house[-1]], target_house):
-                    self.highlight_card(source_house[-1])
-                    hint_found = True
-                    break
-            if hint_found:
-                break
+    # def get_hint(self):
+    #     current_state = GameState(
+    #         [[Card(card.suit, card.rank) for card in house] for house in self.houses]
+    #     )
+    #     solver = Solver(current_state)
+    #     best_move = solver.find_best_move()
+    #     return best_move
 
-        # Check for moves to end houses
-        if not hint_found:
-            for house in self.houses:
-                if house and self.can_move_to_end_house(house[-1]):
-                    self.highlight_card(house[-1])
-                    hint_found = True
-                    break
+    # def is_game_winnable(self):
+    #     current_state = GameState(
+    #         [[Card(card.suit, card.rank) for card in house] for house in self.houses]
+    #     )
+    #     solver = Solver(current_state)
+    #     return solver.is_game_winnable()
 
-        if not hint_found:
-            self.status_var.set(
-                "No hints available. Try moving cards to reveal new options."
-            )
+    # def show_hint(self):
+    #     self.clear_highlights()
+    #     best_move = self.get_hint()
+
+    #     if best_move:
+    #         source, target, card = best_move
+    #         source_house = self.houses[source]
+    #         target_house = self.houses[target]  # Not used.
+
+    #         # Highlight the card to move
+    #         self.highlight_card(source_house[-1])
+
+    #         # Update status bar with hint message
+    #         self.status_var.set(
+    #             f"Hint: Move {card.rank} of {card.suit} from house {source + 1} to house {target + 1}"
+    #         )
+    #     else:
+    #         self.status_var.set(
+    #             "No hints available. The game may be in an unwinnable state."
+    #         )
+
+    #     # Check if the game is still winnable
+    #     if not self.is_game_winnable():
+    #         self.status_var.set("Warning: The game may no longer be winnable.")
 
     # FIXME: Make better card highlighting. Try highlighting the card entirely instead of just the border.
 
