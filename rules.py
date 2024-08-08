@@ -10,6 +10,7 @@ class RulesManager:
         self.show_rules_on_startup = tk.BooleanVar(value=True)
         self.zoom_factor = tk.DoubleVar(value=1.0)
         self.is_fullscreen = tk.BooleanVar(value=False)
+        self.is_muted = tk.BooleanVar(value=False)  # Add this line
         self.preferences_file = os.path.join(
             os.path.expanduser("~"), ".patience_preferences.json"
         )
@@ -94,6 +95,7 @@ Good luck and enjoy the game!"""
                 self.show_rules_on_startup.set(prefs.get("show_rules_on_startup", True))
                 self.zoom_factor.set(prefs.get("zoom_factor", 1.0))
                 self.is_fullscreen.set(prefs.get("is_fullscreen", False))
+                self.is_muted.set(prefs.get("is_muted", False))
         except FileNotFoundError:
             pass  # Use default values if file doesn't exist
 
@@ -102,6 +104,7 @@ Good luck and enjoy the game!"""
             "show_rules_on_startup": self.show_rules_on_startup.get(),
             "zoom_factor": self.zoom_factor.get(),
             "is_fullscreen": self.is_fullscreen.get(),
+            "is_muted": self.is_muted.get(),
         }
         with open(self.preferences_file, "w") as f:
             json.dump(prefs, f)
@@ -118,4 +121,11 @@ Good luck and enjoy the game!"""
 
     def set_is_fullscreen(self, value):
         self.is_fullscreen.set(value)
+        self.save_preferences()
+
+    def get_is_muted(self):
+        return self.is_muted.get()
+
+    def set_is_muted(self, value):
+        self.is_muted.set(value)
         self.save_preferences()

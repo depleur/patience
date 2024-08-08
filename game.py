@@ -16,7 +16,7 @@ from win_celebration import create_win_celebration
 import signal
 import json
 
-CURRENT_VERSION = "v1.0.21-alpha"
+CURRENT_VERSION = "v1.0.24-alpha"
 
 
 class Card:
@@ -89,6 +89,14 @@ class PatienceGame:
 
         if not self.rules_manager.get_is_fullscreen():
             self.master.overrideredirect(False)
+
+        self.is_muted = self.rules_manager.get_is_muted()
+        if self.is_muted:
+            pygame.mixer.pause()
+            self.mute_button.config(text="Unmute")
+        else:
+            pygame.mixer.unpause()
+            self.mute_button.config(text="Mute")
 
     @staticmethod
     def resource_path(relative_path):
@@ -332,11 +340,6 @@ class PatienceGame:
         self.redeal_button.pack(side=tk.LEFT, padx=5)
         self.redeal_button.config(state=tk.DISABLED)  # Initially disabled
 
-        self.quit_button = ttk.Button(
-            control_frame, text="Quit", command=self.quit_game
-        )
-        self.quit_button.pack(side=tk.LEFT, padx=5)
-
         # self.hint_button = ttk.Button(
         #     control_frame, text="Hint", command=self.show_hint
         # )
@@ -365,10 +368,20 @@ class PatienceGame:
         )
         self.zoom_out_button.pack(side=tk.LEFT, padx=2)
 
+        self.mute_button = ttk.Button(
+            control_frame, text="Mute", command=self.toggle_mute
+        )
+        self.mute_button.pack(side=tk.LEFT, padx=5)
+
         self.fullscreen_button = ttk.Button(
             control_frame, text="Fullscreen", command=self.toggle_fullscreen
         )
         self.fullscreen_button.pack(side=tk.LEFT, padx=5)
+
+        self.quit_button = ttk.Button(
+            control_frame, text="Quit", command=self.quit_game
+        )
+        self.quit_button.pack(side=tk.LEFT, padx=5)
 
         self.create_update_check_button()
 
@@ -378,6 +391,17 @@ class PatienceGame:
         self.status_var.set("Game restarted. Click 'Deal Cards' to begin.")
         # self.hint_button.config(state=tk.DISABLED)
         self.redeal_button.config(state=tk.DISABLED)  # Disable redeal button
+
+    def toggle_mute(self):
+        self.is_muted = not self.is_muted
+        self.rules_manager.set_is_muted(self.is_muted)
+
+        if self.is_muted:
+            pygame.mixer.pause()
+            self.mute_button.config(text="Unmute")
+        else:
+            pygame.mixer.unpause()
+            self.mute_button.config(text="Mute")
 
     def create_deck(self):
         suits = ["hearts", "diamonds", "clubs", "spades"]
@@ -411,8 +435,14 @@ class PatienceGame:
 
         def deal_card(house_index, card_count):
             if self.interrupt_flag:
-                pygame.mixer.stop()  # Stop the sound if interrupted
+                if pygame.mixer.get_busy():
+                    pygame.mixer.stop()  # Stop the sound if interrupted
                 return
+
+            if self.is_muted:
+                pygame.mixer.pause()
+            else:
+                pygame.mixer.unpause()
 
             if card_count > 0 and self.deck:
                 self.houses[house_index].append(self.deck.pop())
@@ -459,7 +489,8 @@ class PatienceGame:
 
         def redeal_card(house_index, card_count):
             if self.interrupt_flag:
-                pygame.mixer.stop()  # Stop the sound if interrupted
+                if pygame.mixer.get_busy():
+                    pygame.mixer.stop()  # Stop the sound if interrupted
                 return
 
             if card_count > 0 and self.deck:
@@ -493,6 +524,11 @@ class PatienceGame:
         # self.hint_button.config(state=tk.NORMAL)
         self.redeal_button.config(state=tk.NORMAL)
         self.undo_button.config(state=tk.NORMAL)
+
+        if self.is_muted:
+            pygame.mixer.pause()
+        else:
+            pygame.mixer.unpause()
 
     def display_cards(self):
         self.game_canvas.delete("card")
