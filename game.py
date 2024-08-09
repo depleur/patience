@@ -16,7 +16,7 @@ from win_celebration import create_win_celebration
 import signal
 import json
 
-CURRENT_VERSION = "v1.0.24-alpha"
+CURRENT_VERSION = "v1.0.25-alpha"
 
 
 class Card:
