@@ -10,7 +10,8 @@ class RulesManager:
         self.show_rules_on_startup = tk.BooleanVar(value=True)
         self.zoom_factor = tk.DoubleVar(value=1.0)
         self.is_fullscreen = tk.BooleanVar(value=False)
-        self.is_muted = tk.BooleanVar(value=False)  # Add this line
+        self.is_muted = tk.BooleanVar(value=False)
+        self.high_score = tk.IntVar(value=0)
         self.preferences_file = os.path.join(
             os.path.expanduser("~"), ".patience_preferences.json"
         )
@@ -96,6 +97,7 @@ Good luck and enjoy the game!"""
                 self.zoom_factor.set(prefs.get("zoom_factor", 1.0))
                 self.is_fullscreen.set(prefs.get("is_fullscreen", False))
                 self.is_muted.set(prefs.get("is_muted", False))
+                self.high_score.set(prefs.get("high_score", 0))
         except FileNotFoundError:
             pass  # Use default values if file doesn't exist
 
@@ -105,9 +107,17 @@ Good luck and enjoy the game!"""
             "zoom_factor": self.zoom_factor.get(),
             "is_fullscreen": self.is_fullscreen.get(),
             "is_muted": self.is_muted.get(),
+            "high_score": self.high_score.get(),
         }
         with open(self.preferences_file, "w") as f:
             json.dump(prefs, f)
+
+    def get_high_score(self):
+        return self.high_score.get()
+
+    def set_high_score(self, value):
+        self.high_score.set(value)
+        self.save_preferences()
 
     def get_zoom_factor(self):
         return self.zoom_factor.get()

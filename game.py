@@ -52,7 +52,7 @@ class PatienceGame:
         self.move_history = []
         self.move_count = 0
 
-        self.high_score = self.load_high_score()
+        self.high_score = self.rules_manager.get_high_score()
         self.create_high_score_label()
 
         self.card_images = self.load_card_images()
@@ -91,12 +91,9 @@ class PatienceGame:
             self.master.overrideredirect(False)
 
         self.is_muted = self.rules_manager.get_is_muted()
-        if self.is_muted:
-            pygame.mixer.pause()
-            self.mute_button.config(text="Unmute")
-        else:
-            pygame.mixer.unpause()
-            self.mute_button.config(text="Mute")
+        self.update_mute_button_text()
+
+        self.apply_mute_state()
 
     @staticmethod
     def resource_path(relative_path):
@@ -152,11 +149,10 @@ class PatienceGame:
     def update_high_score(self):
         if self.move_count < self.high_score or self.high_score == 0:
             self.high_score = self.move_count
+            self.rules_manager.set_high_score(self.high_score)
             self.high_score_label.config(text=f"High Score: {self.high_score}")
-            self.save_high_score()
 
     def quit_game(self):
-        self.save_high_score()
         os.kill(os.getpid(), signal.SIGTERM)
 
     def update_move_count(self):
@@ -168,33 +164,6 @@ class PatienceGame:
             self.master, text="Clear Board", command=self.clear_board
         )
         self.clear_button.pack(side=tk.BOTTOM, pady=5)
-
-    def clear_board(self):
-        self.interrupt_flag = True
-        self.master.after_cancel(
-            self.master.after_id
-        )  # Cancel any ongoing after() calls
-
-        self.houses = [[] for _ in range(10)]
-        self.end_houses = [[] for _ in range(4)]
-        self.card_items.clear()
-        self.game_canvas.delete("card")
-        self.move_history.clear()
-
-        # Reset move count and update the label
-        self.move_count = 0
-        self.move_counter_label.config(text="Moves: 0")
-
-        self.status_var.set("Board cleared. Click 'Deal Cards' to start a new game.")
-        self.deal_button.config(state=tk.NORMAL)
-        self.undo_button.config(state=tk.DISABLED)
-        if self.initial_deck is None:
-            self.redeal_button.config(state=tk.DISABLED)
-        else:
-            self.redeal_button.config(state=tk.NORMAL)
-        self.clear_highlights()
-
-        self.interrupt_flag = False
 
     def create_update_check_button(self):
         self.update_check_button = ttk.Button(
@@ -274,7 +243,6 @@ class PatienceGame:
     def on_closing(self):
         pygame.mixer.stop()
         self.rules_manager.save_preferences()
-        self.save_high_score()
         self.master.destroy()
 
     def create_game_area(self):
@@ -392,17 +360,6 @@ class PatienceGame:
         # self.hint_button.config(state=tk.DISABLED)
         self.redeal_button.config(state=tk.DISABLED)  # Disable redeal button
 
-    def toggle_mute(self):
-        self.is_muted = not self.is_muted
-        self.rules_manager.set_is_muted(self.is_muted)
-
-        if self.is_muted:
-            pygame.mixer.pause()
-            self.mute_button.config(text="Unmute")
-        else:
-            pygame.mixer.unpause()
-            self.mute_button.config(text="Mute")
-
     def create_deck(self):
         suits = ["hearts", "diamonds", "clubs", "spades"]
         ranks = list(range(1, 14))
@@ -421,7 +378,40 @@ class PatienceGame:
         self.deal_button.pack(side=tk.BOTTOM, pady=10)
         self.deal_button.config(state=tk.NORMAL)
 
+    def clear_board(self):
+        self.interrupt_flag = True
+        self.master.after_cancel(
+            self.master.after_id
+        )  # Cancel any ongoing after() calls
+
+        self.houses = [[] for _ in range(10)]
+        self.end_houses = [[] for _ in range(4)]
+        self.card_items.clear()
+        self.game_canvas.delete("card")
+        self.move_history.clear()
+
+        self.move_count = 0
+        self.move_counter_label.config(text="Moves: 0")
+
+        self.status_var.set("Board cleared. Click 'Deal Cards' to start a new game.")
+        self.undo_button.config(state=tk.DISABLED)
+        if self.initial_deck is None:
+            self.redeal_button.config(state=tk.DISABLED)
+        else:
+            self.redeal_button.config(state=tk.NORMAL)
+        self.clear_highlights()
+
+        # Add a small delay before re-enabling the deal button
+        self.master.after(500, self.enable_deal_button)
+
+    def enable_deal_button(self):
+        self.interrupt_flag = False
+        self.deal_button.config(state=tk.NORMAL)
+
     def animated_deal(self):
+        if self.interrupt_flag:
+            return  # Don't start a new deal if an interrupt is in progress
+
         self.deal_button.config(state=tk.DISABLED)
         self.status_var.set("Dealing cards...")
 
@@ -435,20 +425,14 @@ class PatienceGame:
 
         def deal_card(house_index, card_count):
             if self.interrupt_flag:
-                if pygame.mixer.get_busy():
-                    pygame.mixer.stop()  # Stop the sound if interrupted
+                pygame.mixer.stop()  # Stop the sound if interrupted
                 return
-
-            if self.is_muted:
-                pygame.mixer.pause()
-            else:
-                pygame.mixer.unpause()
 
             if card_count > 0 and self.deck:
                 self.houses[house_index].append(self.deck.pop())
                 self.display_cards()
                 self.master.update()
-                self.deal_sound.play()
+                self.play_sound(self.deal_sound)
                 self.master.after_id = self.master.after(
                     100, deal_card, house_index, card_count - 1
                 )
@@ -461,6 +445,24 @@ class PatienceGame:
                 self.finish_deal()
 
         deal_card(0, house_card_counts[0])
+
+    def toggle_mute(self):
+        self.is_muted = not self.is_muted
+        self.rules_manager.set_is_muted(self.is_muted)
+        self.update_mute_button_text()
+        self.apply_mute_state()
+
+    def update_mute_button_text(self):
+        self.mute_button.config(text="Unmute" if self.is_muted else "Mute")
+
+    def apply_mute_state(self):
+        volume = 0.0 if self.is_muted else 1.0
+        self.deal_sound.set_volume(volume)
+        # Apply to other sounds if there are any
+
+    def play_sound(self, sound):
+        if not self.is_muted:
+            sound.play()
 
     def finish_deal(self):
         self.status_var.set("Cards dealt. Good luck!")
@@ -497,7 +499,7 @@ class PatienceGame:
                 self.houses[house_index].append(self.deck.pop())
                 self.display_cards()
                 self.master.update()
-                self.deal_sound.play()
+                self.play_sound(self.deal_sound)
                 self.master.after_id = self.master.after(
                     100, redeal_card, house_index, card_count - 1
                 )
@@ -743,7 +745,6 @@ class PatienceGame:
                         valid_house_count += 1
 
         if valid_house_count == 4:
-            self.update_high_score()
             self.win_celebration.show_celebration(self.move_count)
             return True
 
@@ -881,13 +882,13 @@ class PatienceGame:
 
     #     update_opacity()
 
-    # def clear_highlights(self):
-    #     for rect in self.highlight_rectangles:
-    #         self.game_canvas.delete(rect)
-    #     self.highlight_rectangles.clear()
-    #     if self.strobe_after_id is not None:
-    #         self.master.after_cancel(self.strobe_after_id)
-    #         self.strobe_after_id = None
+    def clear_highlights(self):
+        for rect in self.highlight_rectangles:
+            self.game_canvas.delete(rect)
+        self.highlight_rectangles.clear()
+        if self.strobe_after_id is not None:
+            self.master.after_cancel(self.strobe_after_id)
+            self.strobe_after_id = None
 
     def toggle_fullscreen(self):
         is_fullscreen = self.master.attributes("-fullscreen")
