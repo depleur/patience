@@ -2,8 +2,6 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 import random
-import time
-from math import sin, pi
 from rules import RulesManager
 import os
 import sys
@@ -12,11 +10,12 @@ from updater import Updater
 from tkinter import messagebox
 from win_celebration import create_win_celebration
 
+
 # from solver import Solver, GameState
 import signal
 import json
 
-CURRENT_VERSION = "v1.0.25-alpha"
+CURRENT_VERSION = "v1.0.26-alpha"
 
 
 class Card:
@@ -399,7 +398,7 @@ class PatienceGame:
             self.redeal_button.config(state=tk.DISABLED)
         else:
             self.redeal_button.config(state=tk.NORMAL)
-        self.clear_highlights()
+        # self.clear_highlights()
 
         # Add a small delay before re-enabling the deal button
         self.master.after(500, self.enable_deal_button)
@@ -882,13 +881,13 @@ class PatienceGame:
 
     #     update_opacity()
 
-    def clear_highlights(self):
-        for rect in self.highlight_rectangles:
-            self.game_canvas.delete(rect)
-        self.highlight_rectangles.clear()
-        if self.strobe_after_id is not None:
-            self.master.after_cancel(self.strobe_after_id)
-            self.strobe_after_id = None
+    # def clear_highlights(self):
+    #     for rect in self.highlight_rectangles:
+    #         self.game_canvas.delete(rect)
+    #     self.highlight_rectangles.clear()
+    #     if self.strobe_after_id is not None:
+    #         self.master.after_cancel(self.strobe_after_id)
+    #         self.strobe_after_id = None
 
     def toggle_fullscreen(self):
         is_fullscreen = self.master.attributes("-fullscreen")
@@ -927,11 +926,9 @@ class PatienceGame:
             "Undo Limit Reached", "You can only undo up to 5 moves."
         )
 
-    # TODO: Add scoring system and timer.
+    # TODO: Add timer.
 
-    # TODO: Add undo button.
-
-    # TODO: Add gamestate check to make sure game is winnable after each move, and warn player if not.
+    # TODO: Add gamestate check to make sure game is winnable after each move, and warn player if not. (Minimax maybe? A-B Pruning)
 
 
 if __name__ == "__main__":

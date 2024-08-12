@@ -1,7 +1,8 @@
 import requests
-from tkinter import messagebox
+from tkinter import Tk, Label, Button
 import threading
 import time
+import webbrowser
 
 
 class Updater:
@@ -37,16 +38,27 @@ class Updater:
     def notify_update_available(self, new_version, download_url):
         if self.master:
             self.master.after(
-                0,
-                lambda: messagebox.showinfo(
-                    "Update Available",
-                    f"A new version ({new_version}) is available!\n"
-                    f"You can download it from:\n{download_url}",
-                ),
+                0, lambda: self.show_custom_update_dialog(new_version, download_url)
             )
         else:
             print(f"A new version ({new_version}) is available!")
             print(f"You can download it from: {download_url}")
+
+    def show_custom_update_dialog(self, new_version, download_url):
+        dialog = Tk()
+        dialog.title("Update Available")
+        dialog.geometry("300x150")
+
+        Label(dialog, text=f"A new version ({new_version}) is available!").pack(pady=10)
+
+        def open_download_url():
+            webbrowser.open(download_url)
+            dialog.destroy()
+
+        Button(dialog, text="Take me there", command=open_download_url).pack(pady=5)
+        Button(dialog, text="No thanks", command=dialog.destroy).pack(pady=5)
+
+        dialog.mainloop()
 
     def start_update_check_thread(self):
         self.update_thread = threading.Thread(target=self.periodic_update_check)
