@@ -1,5 +1,11 @@
 # Patience Card Game
 
+![Releases](https://img.shields.io/github/v/release/depleur/patience?label=latest-release) ![Build](https://img.shields.io/badge/build-passing-brightgreen) ![License](https://img.shields.io/badge/license-GPL--v3-blue)
+
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-orange)
+
+![Source](https://img.shields.io/badge/source-available-blue)
+
 Welcome to the Patience Card Game! This is a classic card game implemented in Python using the Tkinter library for the GUI and the PIL library for image handling. The game is similar to Solitaire, where the goal is to move all cards to 4 end houses to win.
 
 ## Table of Contents
@@ -29,11 +35,14 @@ You can install and run the Patience Card Game in two ways: from releases or fro
    - For Linux: Download the Linux executable
 
 3. Running the game:
+
    - Windows: Simply double-click the `.exe` file to run the game.
    - macOS and Linux: Open a terminal, navigate to the directory containing the downloaded file, and run:
+
      ```sh
      chmod +x patience-macos && ./patience-macos
      ```
+
      This command makes the file executable and runs it. After the first time, you can double-click the file to run it.
 
 ### Option 2: Installing from Source
